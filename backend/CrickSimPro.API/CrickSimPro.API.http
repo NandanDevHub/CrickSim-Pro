@@ -1,0 +1,6 @@
+@CrickSimPro.API_HostAddress = http://localhost:5210
+
+GET {{CrickSimPro.API_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
