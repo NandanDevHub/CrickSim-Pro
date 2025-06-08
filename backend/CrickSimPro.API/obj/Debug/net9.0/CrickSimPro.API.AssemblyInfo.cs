@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("CrickSimPro.API")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+6fd7d6ca44720a99ac0fdfd869457e36ed76cc18")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+1d157c9d6de41076c2bc1aee4ba5706ccacc5b46")]
 [assembly: System.Reflection.AssemblyProductAttribute("CrickSimPro.API")]
 [assembly: System.Reflection.AssemblyTitleAttribute("CrickSimPro.API")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
