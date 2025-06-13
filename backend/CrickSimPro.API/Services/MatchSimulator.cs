@@ -12,7 +12,7 @@ public class MatchSimulator
 
         for (int i = 0; i < 6; i++)
         {
-            var outcome = SimulateBall(scenario.BattingAggression);
+            var outcome = SimulateBall(scenario.BattingAggression, scenario.BowlingAggression);
             outcomes.Add(outcome);
 
             if (outcome == "W")
@@ -32,11 +32,14 @@ public class MatchSimulator
         };
     }
 
-    private string SimulateBall(int aggression)
+    private string SimulateBall(int battingaggression, int bowlingaggression)
     {
+        int baseaggression = battingaggression + bowlingaggression;
+        int effectiveAggression = Math.Clamp(baseaggression + 5,1, 10);
+
         int chance = _random.Next(100);
 
-        if (chance < 10 - aggression) return "0";
+        if (chance < 10 - effectiveAggression) return "0";
         if (chance < 30) return "1";
         if (chance < 50) return "2";
         if (chance < 65) return "4";
