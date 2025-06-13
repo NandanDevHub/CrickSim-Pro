@@ -6,29 +6,40 @@ public class MatchSimulator
     private readonly Random _random = new();
     public object Simulate(MatchScenario scenario)
     {
-        var outcomes = new List<string>();
-        int runs = 0;
-        int wickets = 0;
 
-        for (int i = 0; i < 6; i++)
+        var allBalls = new List<string>(); 
+        int totalRuns = 0;
+        int totalWickets = 0;
+
+        for (int over = 0; over <= scenario.Overs; over++)
         {
-            var outcome = SimulateBall(scenario.BattingAggression, scenario.BowlingAggression);
-            outcomes.Add(outcome);
+            for (int ball = 1; ball <= 6; ball++)
+            {
+                if (totalWickets >= 10)
+                {
+                    allBalls.Add("Innings Ended (All Out)");
+                    goto EndOfInnings;
+                }
 
-            if (outcome == "W")
-                wickets++;
-            else
-                runs += int.Parse(outcome);
+                var outcome = SimulateBall(scenario.BattingAggression, scenario.BowlingAggression);
+                allBalls.Add(outcome);
+
+                if (outcome == "W")
+                    totalWickets++;
+                else
+                    totalRuns += int.Parse(outcome);
+            }
         }
-
+        
+EndOfInnings:
         return new SimulationResult
         {
-            Message = "Over Simulatted",
+            Message = $"Simulated {scenario.Overs} Overs",
             Pitch = scenario.PitchType,
             Weather = scenario.Weather,
-            Runs = runs,
-            Wickets = wickets,
-            BallByBall = outcomes
+            Runs = totalRuns,
+            Wickets = totalWickets,
+            BallByBall = allBalls
         };
     }
 

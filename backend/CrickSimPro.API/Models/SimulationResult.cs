@@ -7,4 +7,5 @@ public class SimulationResult
     public int Runs { get; set; }
     public int Wickets { get; set; }
     public required List<string> BallByBall { get; set; }
+    
 }
