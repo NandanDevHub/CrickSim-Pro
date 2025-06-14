@@ -1,52 +1,55 @@
 using CrickSimPro.API.Models;
 
 namespace CrickSimPro.API.Services;
+
 public class MatchSimulator
 {
     private readonly Random _random = new();
-    public object Simulate(MatchScenario scenario)
+    public SimulationResult Simulate(MatchScenario scenario)
     {
-
-        var allBalls = new List<string>(); 
+        var allOvers = new List<List<string>>();
         int totalRuns = 0;
         int totalWickets = 0;
 
-        for (int over = 0; over <= scenario.Overs; over++)
+        for (int over = 1; over <= scenario.Overs; over++)
         {
+            var currentOver = new List<string>();
+
             for (int ball = 1; ball <= 6; ball++)
             {
                 if (totalWickets >= 10)
                 {
-                    allBalls.Add("Innings Ended (All Out)");
-                    goto EndOfInnings;
+                    currentOver.Add("Innings Ended (All Out)");
+                    allOvers.Add(currentOver);
+                    goto EndInnings;
                 }
 
                 var outcome = SimulateBall(scenario.BattingAggression, scenario.BowlingAggression);
-                allBalls.Add(outcome);
+                currentOver.Add(outcome);
 
-                if (outcome == "W")
-                    totalWickets++;
-                else
-                    totalRuns += int.Parse(outcome);
+                if (outcome == "W") totalWickets++;
+                else totalRuns += int.Parse(outcome);
             }
+
+            allOvers.Add(currentOver);
         }
-        
-EndOfInnings:
+
+    EndInnings:
         return new SimulationResult
         {
-            Message = $"Simulated {scenario.Overs} Overs",
+            Message = $"Simulated {scenario.Overs} over(s)",
             Pitch = scenario.PitchType,
             Weather = scenario.Weather,
             Runs = totalRuns,
             Wickets = totalWickets,
-            BallByBall = allBalls
+            OversDetail = allOvers
         };
     }
 
     private string SimulateBall(int battingaggression, int bowlingaggression)
     {
         int baseaggression = battingaggression + bowlingaggression;
-        int effectiveAggression = Math.Clamp(baseaggression + 5,1, 10);
+        int effectiveAggression = Math.Clamp(baseaggression + 5, 1, 10);
 
         int chance = _random.Next(100);
 
