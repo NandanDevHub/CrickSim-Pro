@@ -1,0 +1,11 @@
+# Ignore build output from all backend projects
+**/bin/
+**/obj/
+
+.vscode/
+
+# macOS system files
+.DS_Store
+
+# Future frontend folders
+frontend/node_modules/
