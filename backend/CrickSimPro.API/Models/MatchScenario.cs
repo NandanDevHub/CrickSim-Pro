@@ -9,6 +9,8 @@ public class MatchScenario
     public required string BowlerType { get; set; }
     public int BowlingAggression { get; set; }
 
-    public int Overs { get; set; } 
+    public int Overs { get; set; }
+
+    public required string GameType { get; set; }
 
 }
