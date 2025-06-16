@@ -15,6 +15,7 @@ public class MatchSimulator
         for (int over = 1; over <= totalOvers; over++)
         {
             var currentOver = new List<string>();
+            var bowlerType = (scenario.BowlerTypes.Count > (over - 1)) ? scenario.BowlerTypes[over - 1]:scenario.BowlerTypes.Last();
 
             for (int ball = 1; ball <= 6; ball++)
             {
@@ -31,8 +32,11 @@ public class MatchSimulator
                     scenario.GameType,
                     scenario.PitchType,
                     scenario.Weather,
-                    scenario.BowlerType
-                ); currentOver.Add(outcome);
+                    bowlerType,
+                    scenario.CurrentDay
+                );
+
+                currentOver.Add(outcome);
 
                 if (outcome == "W") totalWickets++;
                 else totalRuns += int.Parse(outcome);
@@ -53,10 +57,9 @@ public class MatchSimulator
         };
     }
 
-    private string SimulateBall(int battingaggression, int bowlingaggression, string gameType, string pitchType, string weather, string bowlerType)
+    private string SimulateBall(int battingaggression, int bowlingaggression, string gameType, string pitchType, string weather, string bowlerType, int currentDay)
     {
-        (int pitchMod, int weatherMod) = GetConditionsImpact(pitchType, weather);
-        int bowlerMod = bowlerType.ToLower() switch
+        (int pitchMod, int weatherMod) = GetConditionsImpact(pitchType, weather, gameType, currentDay); int bowlerMod = bowlerType.ToLower() switch
         {
             "pace" => (pitchType.ToLower() == "green" || weather.ToLower() == "cloudy") ? 2 : 0,
             "swing" => (weather.ToLower() == "cloudy" || weather.ToLower() == "humid") ? 2 : 0,
@@ -117,7 +120,7 @@ public class MatchSimulator
         };
     }
 
-    private (int pitchModifier, int weatherModifier) GetConditionsImpact(string pitchType, string weather)
+    private (int pitchModifier, int weatherModifier) GetConditionsImpact(string pitchType, string weather, string gameType, int currentDay)
     {
         int pitchModifier = pitchType.ToLower() switch
         {
@@ -135,6 +138,21 @@ public class MatchSimulator
             _ => 0
         };
 
-        return (pitchModifier, weatherModifier);
+        int dayModifier = 0;
+
+        if (gameType.ToUpper() == "TEST")
+        {
+            dayModifier = currentDay switch
+            {
+                1 => -1,
+                2 => 0,
+                3 => 1,
+                4 => 2,
+                5 => 3,
+                _ => 0
+            };
+        }
+
+        return (pitchModifier + dayModifier, weatherModifier);
     }
 }
