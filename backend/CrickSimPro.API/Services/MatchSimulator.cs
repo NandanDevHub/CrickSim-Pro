@@ -9,7 +9,7 @@ public class MatchSimulator
     {
         int totalOvers = scenario.Overs > 0 ? scenario.Overs : GetDefaultOvers(scenario.GameType);
         var allOvers = new List<List<string>>();
-        var overStatsList = new List<OverStat>(); // List to hold over statistics
+        var overStatsList = new List<OverStat>();
         int totalRuns = 0;
         int totalWickets = 0;
 
@@ -91,15 +91,14 @@ public class MatchSimulator
 
     private string SimulateBall(int battingaggression, int bowlingaggression, string gameType, string pitchType, string weather, string bowlerType, int currentDay)
     {
-        (int pitchMod, int weatherMod) = GetConditionsImpact(pitchType, weather, gameType, currentDay); int bowlerMod = bowlerType.ToLower() switch
-        {
-            "pace" => (pitchType.ToLower() == "green" || weather.ToLower() == "cloudy") ? 2 : 0,
-            "swing" => (weather.ToLower() == "cloudy" || weather.ToLower() == "humid") ? 2 : 0,
-            "spin" => (pitchType.ToLower() == "dry") ? 2 : 0,
-            _ => 0
-        };
+        (int pitchMod, int weatherMod) = GetConditionsImpact(pitchType, weather, gameType, currentDay);
+        int bowlerMod = GetBowlerEffectiveness(bowlerType, pitchType, weather, gameType, currentDay);
 
-        int effectiveAggression = Math.Clamp(battingaggression - bowlingaggression + 5 + pitchMod + weatherMod - bowlerMod, 1, 10);
+        int effectiveAggression = Math.Clamp(
+            battingaggression - bowlingaggression + 5 + pitchMod + weatherMod - bowlerMod,
+            1, 10
+        );
+        
         int chance = _random.Next(100);
         gameType = gameType.ToUpper();
 
@@ -187,4 +186,29 @@ public class MatchSimulator
 
         return (pitchModifier + dayModifier, weatherModifier);
     }
+
+    private int GetBowlerEffectiveness(string bowlerType, string pitchType, string weather, string gameType, int currentDay)
+    {
+        int modifier = 0;
+
+        if (bowlerType.ToLower() == "spin")
+        {
+            if (pitchType.ToLower() == "dry") modifier += 2;
+            if (pitchType.ToLower() == "normal") modifier += 1;
+            if (weather.ToLower() == "sunny") modifier += 1;
+
+            if (gameType.ToUpper() == "TEST" && currentDay >= 4) modifier += 2;
+        }
+        else if (bowlerType.ToLower() == "pace")
+        {
+            if (pitchType.ToLower() == "green") modifier += 2;
+            if (weather.ToLower() == "cloudy") modifier += 2;
+            if (weather.ToLower() == "humid") modifier += 1;
+
+            if (gameType.ToUpper() == "TEST" && currentDay <= 2) modifier += 1;
+        }
+
+        return modifier;
+    }
+
 }
