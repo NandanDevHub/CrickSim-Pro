@@ -9,13 +9,17 @@ public class MatchSimulator
     {
         int totalOvers = scenario.Overs > 0 ? scenario.Overs : GetDefaultOvers(scenario.GameType);
         var allOvers = new List<List<string>>();
+        var overStatsList = new List<OverStat>();
         int totalRuns = 0;
         int totalWickets = 0;
 
         for (int over = 1; over <= totalOvers; over++)
         {
             var currentOver = new List<string>();
-            var bowlerType = (scenario.BowlerTypes.Count > (over - 1)) ? scenario.BowlerTypes[over - 1]:scenario.BowlerTypes.Last();
+            var runsThisOver = 0;
+            var wicketsThisOver = 0;
+
+            var bowlerType = (scenario.BowlerTypes.Count > (over - 1)) ? scenario.BowlerTypes[over - 1] : scenario.BowlerTypes.Last();
 
             for (int ball = 1; ball <= 6; ball++)
             {
@@ -23,6 +27,15 @@ public class MatchSimulator
                 {
                     currentOver.Add("Innings Ended (All Out)");
                     allOvers.Add(currentOver);
+                    overStatsList.Add(new OverStat
+                    {
+                        OverNumber = over,
+                        Bowler = bowlerType,
+                        Deliveries = [.. currentOver],
+                        Runs = runsThisOver,
+                        Wickets = wicketsThisOver
+                    });
+
                     goto EndInnings;
                 }
 
@@ -38,11 +51,29 @@ public class MatchSimulator
 
                 currentOver.Add(outcome);
 
-                if (outcome == "W") totalWickets++;
-                else totalRuns += int.Parse(outcome);
+                if (outcome == "W")
+                {
+                    totalWickets++;
+                    wicketsThisOver++;
+                }
+                else
+                {
+                    int run = int.Parse(outcome);
+                    totalRuns += run;
+                    runsThisOver += run;
+                }
             }
-
             allOvers.Add(currentOver);
+            overStatsList.Add(new OverStat
+            {
+                OverNumber = over,
+                Bowler = bowlerType,
+                Deliveries = [.. currentOver],
+                Runs = runsThisOver,
+                Wickets = wicketsThisOver
+            });
+
+            if (totalWickets >= 10) break;
         }
 
     EndInnings:
@@ -53,7 +84,8 @@ public class MatchSimulator
             Weather = scenario.Weather,
             Runs = totalRuns,
             Wickets = totalWickets,
-            OversDetail = allOvers
+            OversDetail = allOvers,
+            OverStats = overStatsList
         };
     }
 
