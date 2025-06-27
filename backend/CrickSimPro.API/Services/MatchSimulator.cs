@@ -9,7 +9,7 @@ public class MatchSimulator
     {
         int totalOvers = scenario.Overs > 0 ? scenario.Overs : GetDefaultOvers(scenario.GameType);
         var allOvers = new List<List<string>>();
-        var overStatsList = new List<OverStat>();
+        var overStatsList = new List<OverStat>(); // List to hold over statistics
         int totalRuns = 0;
         int totalWickets = 0;
 
