@@ -13,6 +13,9 @@ public class MatchSimulator
         int totalRuns = 0;
         int totalWickets = 0;
 
+        var bowlerSpells = new Dictionary<string, int>(); // Tracking bowler Spells
+
+
         for (int over = 1; over <= totalOvers; over++)
         {
             var currentOver = new List<string>();
@@ -21,6 +24,12 @@ public class MatchSimulator
 
             var bowlerType = (scenario.BowlerTypes.Count > (over - 1)) ? scenario.BowlerTypes[over - 1] : scenario.BowlerTypes.Last();
 
+            if(!bowlerSpells.ContainsKey(bowlerType))
+            {
+                bowlerSpells[bowlerType] = 0; // Tracking the number of overs bowled by this bowler
+            }
+            int spellCount = bowlerSpells[bowlerType];
+            bowlerSpells[bowlerType]++;
             for (int ball = 1; ball <= 6; ball++)
             {
                 if (totalWickets >= 10)
@@ -46,7 +55,8 @@ public class MatchSimulator
                     scenario.PitchType,
                     scenario.Weather,
                     bowlerType,
-                    scenario.CurrentDay
+                    scenario.CurrentDay,
+                    spellCount
                 );
 
                 currentOver.Add(outcome);
@@ -89,16 +99,16 @@ public class MatchSimulator
         };
     }
 
-    private string SimulateBall(int battingaggression, int bowlingaggression, string gameType, string pitchType, string weather, string bowlerType, int currentDay)
+    private string SimulateBall(int battingaggression, int bowlingaggression, string gameType, string pitchType, string weather, string bowlerType, int currentDay,  int spellCount)
     {
         (int pitchMod, int weatherMod) = GetConditionsImpact(pitchType, weather, gameType, currentDay);
-        int bowlerMod = GetBowlerEffectiveness(bowlerType, pitchType, weather, gameType, currentDay);
+        int bowlerMod = GetBowlerEffectiveness(bowlerType, pitchType, weather, gameType, currentDay, spellCount);
 
         int effectiveAggression = Math.Clamp(
             battingaggression - bowlingaggression + 5 + pitchMod + weatherMod - bowlerMod,
             1, 10
         );
-        
+
         int chance = _random.Next(100);
         gameType = gameType.ToUpper();
 
@@ -187,7 +197,7 @@ public class MatchSimulator
         return (pitchModifier + dayModifier, weatherModifier);
     }
 
-    private int GetBowlerEffectiveness(string bowlerType, string pitchType, string weather, string gameType, int currentDay)
+    private int GetBowlerEffectiveness(string bowlerType, string pitchType, string weather, string gameType, int currentDay, int spellCount)
     {
         int modifier = 0;
 
@@ -206,6 +216,12 @@ public class MatchSimulator
             if (weather.ToLower() == "humid") modifier += 1;
 
             if (gameType.ToUpper() == "TEST" && currentDay <= 2) modifier += 1;
+        }
+
+        // Adding Fatigue starts after 2 overs bowled
+        if (spellCount > 3)
+        {
+            modifier -= (spellCount - 2);
         }
 
         return modifier;
