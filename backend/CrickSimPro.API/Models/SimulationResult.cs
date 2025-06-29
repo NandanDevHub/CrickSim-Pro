@@ -8,5 +8,5 @@ public class SimulationResult
     public int Runs { get; set; }
     public int Wickets { get; set; }
     public required List<List<string>> OversDetail { get; set; }
-    public required List<OverStat> OverStats { get; set; } = new();
+    public required List<OverStat> OverStats { get; set; } = [];
 }
