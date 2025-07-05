@@ -17,8 +17,14 @@ namespace CrickSimPro.API.Services
             var overStatsList = new List<OverStat>();
             int totalRuns = 0;
             int totalWickets = 0;
-
             var bowlerSpells = new Dictionary<string, int>();
+
+            var batters = scenario.Batters;
+            int strikerIndex = 0;
+            int nonStrikerIndex = 1;
+            int nextBatterIndex = 2;
+            string striker = batters[strikerIndex].Name;
+            string nonStriker = batters[nonStrikerIndex].Name;
 
             for (int over = 1; over <= totalOvers; over++)
             {
