@@ -28,5 +28,12 @@ namespace CrickSimPro.Constants
         // Bowler types
         public const string BowlerSpin = "spin";
         public const string BowlerPace = "pace";
+
+        // Stamina
+        public const int MaxStamina = 100;
+        public const int StaminaLossPerOver = 8;
+        public const int StaminaLossPerBall = 2;
+        public const int StaminaLossPerRun = 1;
+
     }
 }

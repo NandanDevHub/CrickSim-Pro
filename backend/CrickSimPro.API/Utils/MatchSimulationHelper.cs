@@ -61,7 +61,7 @@ namespace CrickSimPro.Utils
                 SimulationConstants.GameTypeTest => SimulationConstants.TestOvers,
                 SimulationConstants.GameTypeODI => SimulationConstants.ODIOvers,
                 SimulationConstants.GameTypeT20 => SimulationConstants.T20Overs,
-                _ => SimulationConstants.T20Overs
+                _ => SimulationConstants.T20Overs 
             };
         }
     }
