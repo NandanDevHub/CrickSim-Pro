@@ -121,7 +121,6 @@ namespace CrickSimPro.API.Services
                     }
                 }
 
-                // 🔁 End of over: swap striker and non-striker
                 var tempStriker = striker;
                 striker = nonStriker;
                 nonStriker = tempStriker;
