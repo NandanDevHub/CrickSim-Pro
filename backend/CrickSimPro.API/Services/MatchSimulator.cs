@@ -23,8 +23,14 @@ namespace CrickSimPro.API.Services
             int strikerIndex = 0;
             int nonStrikerIndex = 1;
             int nextBatterIndex = 2;
+
+            if (batters.Count < 2)
+              throw new Exception("At least 2 batters are required to start the simulation.");
+              
             string striker = batters[strikerIndex].Name;
             string nonStriker = batters[nonStrikerIndex].Name;
+
+            BatterStatsManager.Initialize(batters);
 
             for (int over = 1; over <= totalOvers; over++)
             {
@@ -73,20 +79,51 @@ namespace CrickSimPro.API.Services
                         spellCount
                     );
 
-                    currentOver.Add(outcome);
-
+                    currentOver.Add($"{striker}: {outcome}");
+                    BatterStatsManager.RecordBall(striker, outcome);
                     if (outcome == "W")
                     {
                         totalWickets++;
                         wicketsThisOver++;
+
+                        if (nextBatterIndex < batters.Count)
+                        {
+                            striker = batters[nextBatterIndex].Name;
+                            nextBatterIndex++;
+                        }
+                        else
+                        {
+                            currentOver.Add("No batters left. All Out.");
+                            allOvers.Add(currentOver);
+                            overStatsList.Add(new OverStat
+                            {
+                                OverNumber = over,
+                                Bowler = bowlerType,
+                                Deliveries = [.. currentOver],
+                                Runs = runsThisOver,
+                                Wickets = wicketsThisOver
+                            });
+                            goto EndInnings;
+                        }
                     }
                     else
                     {
                         int run = int.Parse(outcome);
                         totalRuns += run;
                         runsThisOver += run;
+
+                        if (run % 2 == 1)
+                        {
+                            var temp = striker;
+                            striker = nonStriker;
+                            nonStriker = temp;
+                        }
                     }
                 }
+
+                var tempStriker = striker;
+                striker = nonStriker;
+                nonStriker = tempStriker;
 
                 allOvers.Add(currentOver);
                 overStatsList.Add(new OverStat
@@ -110,7 +147,8 @@ namespace CrickSimPro.API.Services
                 Runs = totalRuns,
                 Wickets = totalWickets,
                 OversDetail = allOvers,
-                OverStats = overStatsList
+                OverStats = overStatsList,
+                BatterStats = BatterStatsManager.GetAllStats()
             };
         }
     }

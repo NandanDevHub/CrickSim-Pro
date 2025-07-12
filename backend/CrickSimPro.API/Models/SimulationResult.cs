@@ -9,4 +9,6 @@ public class SimulationResult
     public int Wickets { get; set; }
     public required List<List<string>> OversDetail { get; set; }
     public required List<OverStat> OverStats { get; set; } = [];
+    public required List<BatterStats> BatterStats { get; set; }
+
 }
