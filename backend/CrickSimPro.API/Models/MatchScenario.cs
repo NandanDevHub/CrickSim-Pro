@@ -15,5 +15,7 @@ public class MatchScenario
 
     public int CurrentDay { get; set; } = 1;
     public List<BatterProfile> Batters { get; set; }
+    public int? TargetScore { get; set; }
+
 }
     
