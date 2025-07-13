@@ -14,7 +14,7 @@ public class MatchScenario
     public required string GameType { get; set; }
 
     public int CurrentDay { get; set; } = 1;
-    public List<BatterProfile> Batters { get; set; }
+    public required List<BatterProfile> Batters { get; set; }
     public int? TargetScore { get; set; }
 
 }

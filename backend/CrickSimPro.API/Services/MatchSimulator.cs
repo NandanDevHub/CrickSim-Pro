@@ -18,6 +18,8 @@ namespace CrickSimPro.API.Services
             int totalRuns = 0;
             int totalWickets = 0;
             var bowlerSpells = new Dictionary<string, int>();
+            BowlingRotationManager.Initialize(scenario.BowlerTypes);
+            BowlerStatsManager.Initialize(scenario.BowlerTypes);
 
             var batters = scenario.Batters;
             int strikerIndex = 0;
@@ -39,19 +41,22 @@ namespace CrickSimPro.API.Services
                 var runsThisOver = 0;
                 var wicketsThisOver = 0;
 
-                var bowlerType = (scenario.BowlerTypes.Count > (over - 1))
-                    ? scenario.BowlerTypes[over - 1]
-                    : scenario.BowlerTypes.Last();
+                var bowlerType = BowlingRotationManager.GetNextBowler(
+                    scenario.BowlerTypes,
+                    over,
+                    totalOvers
+                );
+
 
                 PlayerStaminaManager.ReduceBowlerStamina(bowlerType);
 
-                if (!bowlerSpells.ContainsKey(bowlerType))
+                if (!bowlerSpells.TryGetValue(bowlerType, out int spellCount))
                 {
-                    bowlerSpells[bowlerType] = 0;
+                    spellCount = 0;
+                    bowlerSpells[bowlerType] = spellCount;
                 }
 
-                int spellCount = bowlerSpells[bowlerType];
-                bowlerSpells[bowlerType]++;
+                bowlerSpells[bowlerType] = ++spellCount;
 
                 for (int ball = 1; ball <= 6; ball++)
                 {
@@ -70,11 +75,6 @@ namespace CrickSimPro.API.Services
 
                         goto EndInnings;
                     }
-
-                    int batterStamina = PlayerStaminaManager.GetBatterStamina(striker);
-                    double modifier = PlayerStaminaManager.GetPerformanceModifierFromStamina(batterStamina);
-                    int adjustedAggression = (int)(scenario.BattingAggression * modifier);
-
                     int pressure = MatchPressureManager.CalculatePressure(
                         gameType: scenario.GameType,
                         oversCompleted: over - 1,
@@ -83,6 +83,12 @@ namespace CrickSimPro.API.Services
                         wicketsLost: totalWickets,
                         targetScore: scenario.TargetScore
                     );
+
+                    int batterStamina = PlayerStaminaManager.GetBatterStamina(striker);
+                    double modifier = PlayerStaminaManager.GetPerformanceModifierFromStamina(batterStamina);
+                    int adjustedAggression = (int)(scenario.BattingAggression * modifier);
+                    int pressureAdjustedAggression = adjustedAggression - (pressure / 10);
+                    adjustedAggression = Math.Clamp(pressureAdjustedAggression, 1, 100);
 
                     var outcome = MatchSimulationHelper.SimulateBall(
                         adjustedAggression,
@@ -98,6 +104,7 @@ namespace CrickSimPro.API.Services
 
                     currentOver.Add($"{striker}: {outcome}");
                     BatterStatsManager.RecordBall(striker, outcome);
+                    BowlerStatsManager.RecordDelivery(bowlerType, outcome);
                     if (outcome == "W")
                     {
                         totalWickets++;
@@ -129,7 +136,7 @@ namespace CrickSimPro.API.Services
                         totalRuns += run;
                         runsThisOver += run;
 
-                        PlayerStaminaManager.ReduceBatterStamina(striker, run);
+                        PlayerStaminaManager.ReduceBatterStamina(striker, run, pressure);
 
                         if (run % 2 == 1)
                         {
@@ -162,7 +169,8 @@ namespace CrickSimPro.API.Services
                 Wickets = totalWickets,
                 OversDetail = allOvers,
                 OverStats = overStatsList,
-                BatterStats = BatterStatsManager.GetAllStats()
+                BatterStats = BatterStatsManager.GetAllStats(),
+                BowlerStats = BowlerStatsManager.GetAllStats()
             };
         }
     }

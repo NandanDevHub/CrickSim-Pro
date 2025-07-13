@@ -10,5 +10,6 @@ public class SimulationResult
     public required List<List<string>> OversDetail { get; set; }
     public required List<OverStat> OverStats { get; set; } = [];
     public required List<BatterStats> BatterStats { get; set; }
+    public List<BowlerStats> BowlerStats { get; set; }
 
 }

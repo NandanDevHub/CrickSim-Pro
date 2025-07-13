@@ -25,11 +25,14 @@ public static class PlayerStaminaManager
         BowlerStamina[bowlerName] = Math.Max(BowlerStamina[bowlerName], 0);
     }
 
-    public static void ReduceBatterStamina(string batterName, int runsThisBall)
+    public static void ReduceBatterStamina(string batterName, int runsThisBall, int pressure)
     {
         if (!BatterStamina.ContainsKey(batterName)) return;
 
         int totalLoss = SimulationConstants.StaminaLossPerBall + (runsThisBall > 0 ? SimulationConstants.StaminaLossPerRun * runsThisBall : 0);
+
+        int pressureFatigue = pressure / 30;
+        totalLoss += pressureFatigue;
         BatterStamina[batterName] -= totalLoss;
         BatterStamina[batterName] = Math.Max(BatterStamina[batterName], 0);
     }
