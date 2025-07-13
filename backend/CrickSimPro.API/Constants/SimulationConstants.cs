@@ -35,5 +35,9 @@ namespace CrickSimPro.Constants
         public const int StaminaLossPerBall = 2;
         public const int StaminaLossPerRun = 1;
 
+        // Pressure Modifiers
+        public const int PressurePerWicket = 6;
+        public const double PressurePerRRGap = 5.0; // per 1 run rate difference
+
     }
 }

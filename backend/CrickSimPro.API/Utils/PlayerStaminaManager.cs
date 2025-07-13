@@ -1,4 +1,5 @@
 using CrickSimPro.Constants;
+using CrickSimPro.API.Models;
 
 namespace CrickSimPro.Utils;
 
@@ -7,10 +8,10 @@ public static class PlayerStaminaManager
     private static Dictionary<string, int> BatterStamina = new();
     private static Dictionary<string, int> BowlerStamina = new();
 
-    public static void InitializeStamina(List<string> batters, List<string> bowlers)
+    public static void InitializeStamina(List<BatterProfile> batters, List<string> bowlers)
     {
         foreach (var batter in batters)
-            BatterStamina[batter] = SimulationConstants.MaxStamina;
+            BatterStamina[batter.Name] = SimulationConstants.MaxStamina;
 
         foreach (var bowler in bowlers)
             BowlerStamina[bowler] = SimulationConstants.MaxStamina;
@@ -24,11 +25,14 @@ public static class PlayerStaminaManager
         BowlerStamina[bowlerName] = Math.Max(BowlerStamina[bowlerName], 0);
     }
 
-    public static void ReduceBatterStamina(string batterName, int runsThisBall)
+    public static void ReduceBatterStamina(string batterName, int runsThisBall, int pressure)
     {
         if (!BatterStamina.ContainsKey(batterName)) return;
 
         int totalLoss = SimulationConstants.StaminaLossPerBall + (runsThisBall > 0 ? SimulationConstants.StaminaLossPerRun * runsThisBall : 0);
+
+        int pressureFatigue = pressure / 30;
+        totalLoss += pressureFatigue;
         BatterStamina[batterName] -= totalLoss;
         BatterStamina[batterName] = Math.Max(BatterStamina[batterName], 0);
     }

@@ -14,7 +14,8 @@ namespace CrickSimPro.Utils
             string weather,
             string bowlerType,
             int currentDay,
-            int spellCount)
+            int spellCount,
+            int pressure)
         {
             (int pitchMod, int weatherMod) = MatchConditions.GetConditionsImpact(pitchType, weather, gameType, currentDay);
             int bowlerMod = MatchConditions.GetBowlerEffectiveness(bowlerType, pitchType, weather, gameType, currentDay, spellCount);
@@ -23,7 +24,8 @@ namespace CrickSimPro.Utils
                 battingAggression - bowlingAggression + 5 + pitchMod + weatherMod - bowlerMod,
                 1, 10);
 
-            int chance = _random.Next(100);
+            int pressureImpact = pressure / 6;
+            int chance = _random.Next(100) + pressureImpact;
             gameType = gameType.ToUpper();
 
             return gameType switch
