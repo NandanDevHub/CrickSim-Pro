@@ -41,4 +41,35 @@ public static class MatchPressureManager
 
         return (int)Math.Round(pressure);
     }
+    public static int GetContextualAggressionModifier(
+        string gameType,
+        int oversCompleted,
+        int totalOvers,
+        int wicketsLost,
+        int currentRuns,
+        int targetScore)
+    {
+        int oversLeft = totalOvers - oversCompleted;
+        int requiredRunRate = (targetScore > 0 && oversLeft > 0)
+            ? (int)Math.Ceiling((double)(targetScore - currentRuns) / oversLeft)
+            : 0;
+
+        int modifier = 0;
+
+        // Increasing aggression if chasing high and few overs left
+        if (targetScore > 0)
+        {
+            if (requiredRunRate >= 8 && oversLeft <= 5)
+                modifier += 10;
+            else if (requiredRunRate >= 6 && oversLeft <= 10)
+                modifier += 5;
+        }
+
+        // Lower down the aggression if many wickets lost
+        if (wicketsLost >= 7) modifier -= 10;
+        else if (wicketsLost >= 5) modifier -= 5;
+
+        return Math.Clamp(modifier, -10, 15);
+    }
+
 }

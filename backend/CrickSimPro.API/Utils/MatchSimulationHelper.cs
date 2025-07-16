@@ -15,7 +15,8 @@ namespace CrickSimPro.Utils
             string bowlerType,
             int currentDay,
             int spellCount,
-            int pressure)
+            int pressure,
+            int bowlerStamina)
         {
             (int pitchMod, int weatherMod) = MatchConditions.GetConditionsImpact(pitchType, weather, gameType, currentDay);
             int bowlerMod = MatchConditions.GetBowlerEffectiveness(bowlerType, pitchType, weather, gameType, currentDay, spellCount);
@@ -23,6 +24,9 @@ namespace CrickSimPro.Utils
             int effectiveAggression = Math.Clamp(
                 battingAggression - bowlingAggression + 5 + pitchMod + weatherMod - bowlerMod,
                 1, 10);
+
+            if (bowlerStamina < 40) effectiveAggression += 1;
+            if (bowlerStamina < 25) effectiveAggression += 2;
 
             int pressureImpact = pressure / 6;
             int chance = _random.Next(100) + pressureImpact;
@@ -63,8 +67,21 @@ namespace CrickSimPro.Utils
                 SimulationConstants.GameTypeTest => SimulationConstants.TestOvers,
                 SimulationConstants.GameTypeODI => SimulationConstants.ODIOvers,
                 SimulationConstants.GameTypeT20 => SimulationConstants.T20Overs,
-                _ => SimulationConstants.T20Overs 
+                _ => SimulationConstants.T20Overs
             };
         }
+
+        public static int ApplyBatterTypeModifier(string batterType, int aggression, int currentOver, int totalOvers)
+        {
+            return batterType switch
+            {
+                "Aggressive" => Math.Min(100, aggression + 15),
+                "Anchor" => currentOver < 10 ? Math.Max(1, aggression - 10) : aggression,
+                "Finisher" => currentOver >= totalOvers - 5 ? Math.Min(100, aggression + 20) : aggression,
+                "Tailender" => Math.Max(1, aggression - 15),
+                _ => aggression // AllRounder or unknown
+            };
+        }
+
     }
 }
