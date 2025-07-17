@@ -1,4 +1,5 @@
 using CrickSimPro.API.Models;
+using CrickSimPro.Constants;
 using CrickSimPro.Utils;
 
 namespace CrickSimPro.API.Services
@@ -101,17 +102,37 @@ namespace CrickSimPro.API.Services
                         totalOvers
                     );
 
-                    adjustedAggression -= (pressure / 10);
+                    int matchupModifier = 0;
+                    var batterType = batters.First(b => b.Name == striker).Type;
 
-                        int contextMod = MatchPressureManager.GetContextualAggressionModifier(
-                            scenario.GameType,
-                            over - 1,
-                            totalOvers,
-                            totalWickets,
-                            totalRuns,
-                            scenario.TargetScore ?? 0
-                        );
+                    if (batterType == "Anchor" && bowlerType == "Spin")
+                        matchupModifier += SimulationConstants.AnchorVsSpinPenalty;
+
+                    if (batterType == "Aggressive" && bowlerType == "Swing")
+                        matchupModifier += SimulationConstants.AggressiveVsSwingPenalty;
+
+                    if (batterType == "Finisher" && bowlerType == "Spin")
+
+                        adjustedAggression += matchupModifier;
+
+                    int bowlerAggression = scenario.BowlingAggression;
+
+                    if (scenario.Weather == "Cloudy" && bowlerType == "Swing")
+                        bowlerAggression += SimulationConstants.CloudyWeatherSwingBonus;
+
+                    if (scenario.Weather == "Dry" && bowlerType == "Spin")
+                        bowlerAggression += SimulationConstants.DryWeatherSpinBonus;
+
+                    int contextMod = MatchPressureManager.GetContextualAggressionModifier(
+                        scenario.GameType,
+                        over - 1,
+                        totalOvers,
+                        totalWickets,
+                        totalRuns,
+                        scenario.TargetScore ?? 0
+                    );
                     adjustedAggression += contextMod;
+
                     // Momentum modifier
                     if (recentRuns.ContainsKey(striker))
                     {
@@ -123,11 +144,8 @@ namespace CrickSimPro.API.Services
                     }
 
                     adjustedAggression += _random.Next(-5, 6);
-                    adjustedAggression += contextMod; 
-
                     adjustedAggression = Math.Clamp(adjustedAggression, 1, 100);
 
-                    int bowlerAggression = scenario.BowlingAggression;
                     if (bowlerConfidence.TryGetValue(bowlerType, out int confidence))
                     {
                         if (confidence >= 70) bowlerAggression += 5;
@@ -137,7 +155,7 @@ namespace CrickSimPro.API.Services
                     int bowlerStamina = PlayerStaminaManager.GetBowlerStamina(bowlerType);
                     var outcome = MatchSimulationHelper.SimulateBall(
                         adjustedAggression,
-                        scenario.BowlingAggression,
+                        bowlerAggression,
                         scenario.GameType,
                         scenario.PitchType,
                         scenario.Weather,

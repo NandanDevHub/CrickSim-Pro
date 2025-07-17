@@ -39,5 +39,22 @@ namespace CrickSimPro.Constants
         public const int PressurePerWicket = 6;
         public const double PressurePerRRGap = 5.0; // per 1 run rate difference
 
+        public const int AnchorVsSpinPenalty = -3;
+        public const int AggressiveVsSwingPenalty = -2;
+        public const int FinisherVsSpinBoost = 2;
+
+        public const int CloudyWeatherSwingBonus = 3;
+        public const int DryWeatherSpinBonus = 3;
+
+        // Matchup Modifiers
+        public const int MATCHUP_PACE_VS_ANCHOR_BONUS = 5;
+        public const int MATCHUP_SPIN_VS_AGGRESSIVE_BONUS = 5;
+        public const int MATCHUP_SWING_VS_TAILENDER_BONUS = 10;
+
+        // Weather Bonus/Penalty
+        public const int WEATHER_CLOUDY_SWING_BONUS = 5;
+        public const int WEATHER_DRY_SPIN_BONUS = 3;
+        public const int WEATHER_NORMAL_PACE_BONUS = 2;
+
     }
 }
