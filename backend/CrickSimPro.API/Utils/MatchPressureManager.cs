@@ -15,11 +15,13 @@ public static class MatchPressureManager
     {
         double pressure = 0;
 
-        // Adding the Base pressure from wickets
+        // Base pressure from wickets lost
         pressure += wicketsLost * SimulationConstants.PressurePerWicket;
 
-        // If chasing a target
-        if (targetScore.HasValue)
+        gameType = gameType?.ToUpperInvariant() ?? "";
+
+        // Apply only for ODIs and T20s, and only if target present (chase)
+        if ((gameType == SimulationConstants.GameTypeODI || gameType == SimulationConstants.GameTypeT20) && targetScore.HasValue)
         {
             int runsRemaining = targetScore.Value - runsScored;
             int oversRemaining = totalOvers - oversCompleted;
@@ -27,7 +29,7 @@ public static class MatchPressureManager
             if (oversRemaining > 0)
             {
                 double requiredRunRate = (double)runsRemaining / oversRemaining;
-                double currentRunRate = (double)runsScored / (oversCompleted == 0 ? 1 : oversCompleted);
+                double currentRunRate = oversCompleted > 0 ? (double)runsScored / oversCompleted : 0;
 
                 if (requiredRunRate > currentRunRate)
                 {
@@ -36,11 +38,11 @@ public static class MatchPressureManager
             }
         }
 
-        pressure = Math.Min(pressure, 100);
-        pressure = Math.Max(pressure, 0);
-
+        // Clamp pressure to [0, 100]
+        pressure = Math.Max(0, Math.Min(pressure, 100));
         return (int)Math.Round(pressure);
     }
+
     public static int GetContextualAggressionModifier(
         string gameType,
         int oversCompleted,
@@ -50,26 +52,27 @@ public static class MatchPressureManager
         int targetScore)
     {
         int oversLeft = totalOvers - oversCompleted;
-        int requiredRunRate = (targetScore > 0 && oversLeft > 0)
-            ? (int)Math.Ceiling((double)(targetScore - currentRuns) / oversLeft)
-            : 0;
-
         int modifier = 0;
+        gameType = gameType?.ToUpperInvariant() ?? "";
 
-        // Increasing aggression if chasing high and few overs left
-        if (targetScore > 0)
+        // Only for ODI/T20 chases
+        if ((gameType == SimulationConstants.GameTypeODI || gameType == SimulationConstants.GameTypeT20) && targetScore > 0)
         {
+            double requiredRunRate = (oversLeft > 0)
+                ? (double)(targetScore - currentRuns) / oversLeft
+                : 0;
+
+            // Boost aggression if required run rate is very high in last overs
             if (requiredRunRate >= 8 && oversLeft <= 5)
                 modifier += 10;
             else if (requiredRunRate >= 6 && oversLeft <= 10)
                 modifier += 5;
         }
 
-        // Lower down the aggression if many wickets lost
+        // Lower aggression if many wickets lost
         if (wicketsLost >= 7) modifier -= 10;
         else if (wicketsLost >= 5) modifier -= 5;
 
         return Math.Clamp(modifier, -10, 15);
     }
-
 }
