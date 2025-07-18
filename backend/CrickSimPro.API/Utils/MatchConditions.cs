@@ -10,7 +10,11 @@ namespace CrickSimPro.Utils
             string gameType,
             int currentDay)
         {
-            int pitchModifier = pitchType.ToLower() switch
+            pitchType = pitchType?.ToLowerInvariant() ?? "";
+            weather = weather?.ToLowerInvariant() ?? "";
+            gameType = gameType?.ToUpperInvariant() ?? "";
+
+            int pitchModifier = pitchType switch
             {
                 SimulationConstants.PitchGreen => -2,
                 SimulationConstants.PitchDry => 1,
@@ -18,7 +22,7 @@ namespace CrickSimPro.Utils
                 _ => 0
             };
 
-            int weatherModifier = weather.ToLower() switch
+            int weatherModifier = weather switch
             {
                 SimulationConstants.WeatherSunny => 1,
                 SimulationConstants.WeatherCloudy => -2,
@@ -27,7 +31,7 @@ namespace CrickSimPro.Utils
             };
 
             int dayModifier = 0;
-            if (gameType.ToUpper() == SimulationConstants.GameTypeTest)
+            if (gameType == SimulationConstants.GameTypeTest)
             {
                 dayModifier = currentDay switch
                 {
@@ -51,29 +55,31 @@ namespace CrickSimPro.Utils
             int currentDay,
             int spellCount)
         {
+            bowlerType = bowlerType?.ToLowerInvariant() ?? "";
+            pitchType = pitchType?.ToLowerInvariant() ?? "";
+            weather = weather?.ToLowerInvariant() ?? "";
+            gameType = gameType?.ToUpperInvariant() ?? "";
+
             int modifier = 0;
 
-            if (bowlerType.ToLower() == SimulationConstants.BowlerSpin)
+            if (bowlerType == SimulationConstants.BowlerSpin)
             {
-                if (pitchType.ToLower() == SimulationConstants.PitchDry) modifier += 2;
-                if (pitchType.ToLower() == SimulationConstants.PitchNormal) modifier += 1;
-                if (weather.ToLower() == SimulationConstants.WeatherSunny) modifier += 1;
-
-                if (gameType.ToUpper() == SimulationConstants.GameTypeTest && currentDay >= 4) modifier += 2;
+                if (pitchType == SimulationConstants.PitchDry) modifier += 2;
+                if (pitchType == SimulationConstants.PitchNormal) modifier += 1;
+                if (weather == SimulationConstants.WeatherSunny) modifier += 1;
+                if (gameType == SimulationConstants.GameTypeTest && currentDay >= 4) modifier += 2;
             }
-            else if (bowlerType.ToLower() == SimulationConstants.BowlerPace)
+            else if (bowlerType == SimulationConstants.BowlerPace)
             {
-                if (pitchType.ToLower() == SimulationConstants.PitchGreen) modifier += 2;
-                if (weather.ToLower() == SimulationConstants.WeatherCloudy) modifier += 2;
-                if (weather.ToLower() == SimulationConstants.WeatherHumid) modifier += 1;
-
-                if (gameType.ToUpper() == SimulationConstants.GameTypeTest && currentDay <= 2) modifier += 1;
+                if (pitchType == SimulationConstants.PitchGreen) modifier += 2;
+                if (weather == SimulationConstants.WeatherCloudy) modifier += 2;
+                if (weather == SimulationConstants.WeatherHumid) modifier += 1;
+                if (gameType == SimulationConstants.GameTypeTest && currentDay <= 2) modifier += 1;
             }
 
+            // Bowler spell fatigue effect: negative for longer spells
             if (spellCount > 3)
-            {
                 modifier -= (spellCount - 2);
-            }
 
             return modifier;
         }

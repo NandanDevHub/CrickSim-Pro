@@ -10,10 +10,27 @@ namespace CrickSimPro.API.Services
 
         public SimulationResult Simulate(MatchScenario scenario)
         {
-            int totalOvers = scenario.Overs > 0
-                ? scenario.Overs
-                : MatchSimulationHelper.GetDefaultOvers(scenario.GameType);
+            var firstInningsResult = SimulateInnings(scenario, isSecondInnings: false, targetScore: null);
 
+            if (scenario.GameType == SimulationConstants.GameTypeTest || scenario.BattingSecond == null)
+            {
+                firstInningsResult.IsChase = false;
+                firstInningsResult.TargetScore = null;
+                return firstInningsResult;
+            }
+
+            var chaseScenario = scenario.CloneForSecondInnings(firstInningsResult.Runs + 1);
+            var secondInningsResult = SimulateInnings(chaseScenario, isSecondInnings: true, targetScore: firstInningsResult.Runs + 1);
+            secondInningsResult.IsChase = true;
+            secondInningsResult.TargetScore = firstInningsResult.Runs + 1;
+            // Optionally attach firstInningsResult to secondInningsResult as a property if UI needs both.
+
+            return secondInningsResult;
+        }
+
+        private SimulationResult SimulateInnings(MatchScenario scenario, bool isSecondInnings, int? targetScore)
+        {
+            int totalOvers = scenario.Overs > 0 ? scenario.Overs : MatchSimulationHelper.GetDefaultOvers(scenario.GameType);
             var allOvers = new List<List<string>>();
             var overStatsList = new List<OverStat>();
             int totalRuns = 0;
@@ -29,10 +46,7 @@ namespace CrickSimPro.API.Services
             int strikerIndex = 0;
             int nonStrikerIndex = 1;
             int nextBatterIndex = 2;
-
-            if (batters.Count < 2)
-                throw new Exception("At least 2 batters are required to start the simulation.");
-
+            if (batters.Count < 2) throw new Exception("At least 2 batters are required to start the simulation.");
             string striker = batters[strikerIndex].Name;
             string nonStriker = batters[nonStrikerIndex].Name;
 
@@ -50,23 +64,17 @@ namespace CrickSimPro.API.Services
                 var wicketsThisOver = 0;
 
                 var bowlerType = BowlingRotationManager.GetNextBowler(
-                    scenario.BowlerTypes,
-                    over,
-                    totalOvers
-                );
-
+                    scenario.BowlerTypes, over, totalOvers);
 
                 PlayerStaminaManager.ReduceBowlerStamina(bowlerType);
-
                 if (!bowlerSpells.TryGetValue(bowlerType, out int spellCount))
                 {
                     spellCount = 0;
                     bowlerSpells[bowlerType] = spellCount;
                 }
-
                 bowlerSpells[bowlerType] = ++spellCount;
 
-                for (int ball = 1; ball <= 6; ball++)
+                for (int ball = 1; ball <= SimulationConstants.BallsPerOver; ball++)
                 {
                     if (totalWickets >= 10)
                     {
@@ -80,70 +88,61 @@ namespace CrickSimPro.API.Services
                             Runs = runsThisOver,
                             Wickets = wicketsThisOver
                         });
-
                         goto EndInnings;
                     }
+                    if (isSecondInnings && targetScore.HasValue && totalRuns >= targetScore.Value)
+                    {
+                        currentOver.Add($"Target chased in {over - 1}.{ball - 1} overs!");
+                        allOvers.Add(currentOver);
+                        overStatsList.Add(new OverStat
+                        {
+                            OverNumber = over,
+                            Bowler = bowlerType,
+                            Deliveries = [.. currentOver],
+                            Runs = runsThisOver,
+                            Wickets = wicketsThisOver
+                        });
+                        goto EndInnings;
+                    }
+
                     int pressure = MatchPressureManager.CalculatePressure(
-                        gameType: scenario.GameType,
-                        oversCompleted: over - 1,
-                        totalOvers: totalOvers,
-                        runsScored: totalRuns,
-                        wicketsLost: totalWickets,
-                        targetScore: scenario.TargetScore
-                    );
+                        scenario.GameType, over - 1, totalOvers, totalRuns, totalWickets, targetScore);
 
                     int batterStamina = PlayerStaminaManager.GetBatterStamina(striker);
                     double modifier = PlayerStaminaManager.GetPerformanceModifierFromStamina(batterStamina);
                     int adjustedAggression = (int)(scenario.BattingAggression * modifier);
                     adjustedAggression = MatchSimulationHelper.ApplyBatterTypeModifier(
-                        batters.First(b => b.Name == striker).Type,
-                        adjustedAggression,
-                        over,
-                        totalOvers
-                    );
+                        batters.First(b => b.Name == striker).Type, adjustedAggression, over, totalOvers);
 
                     int matchupModifier = 0;
                     var batterType = batters.First(b => b.Name == striker).Type;
-
-                    if (batterType == "Anchor" && bowlerType == "Spin")
+                    var bowlerTypeCheck = bowlerType.ToLower();
+                    if (batterType == "Anchor" && bowlerTypeCheck == SimulationConstants.BowlerSpin)
                         matchupModifier += SimulationConstants.AnchorVsSpinPenalty;
-
-                    if (batterType == "Aggressive" && bowlerType == "Swing")
+                    if (batterType == "Aggressive" && bowlerTypeCheck == "swing")
                         matchupModifier += SimulationConstants.AggressiveVsSwingPenalty;
-
-                    if (batterType == "Finisher" && bowlerType == "Spin")
-
-                        adjustedAggression += matchupModifier;
+                    if (batterType == "Finisher" && bowlerTypeCheck == SimulationConstants.BowlerSpin)
+                        matchupModifier += SimulationConstants.FinisherVsSpinBoost;
+                    adjustedAggression += matchupModifier;
 
                     int bowlerAggression = scenario.BowlingAggression;
-
-                    if (scenario.Weather == "Cloudy" && bowlerType == "Swing")
+                    if (scenario.Weather.ToLower() == SimulationConstants.WeatherCloudy && bowlerTypeCheck == "swing")
                         bowlerAggression += SimulationConstants.CloudyWeatherSwingBonus;
-
-                    if (scenario.Weather == "Dry" && bowlerType == "Spin")
+                    if (scenario.Weather.ToLower() == SimulationConstants.WeatherDry && bowlerTypeCheck == SimulationConstants.BowlerSpin)
                         bowlerAggression += SimulationConstants.DryWeatherSpinBonus;
 
                     int contextMod = MatchPressureManager.GetContextualAggressionModifier(
-                        scenario.GameType,
-                        over - 1,
-                        totalOvers,
-                        totalWickets,
-                        totalRuns,
-                        scenario.TargetScore ?? 0
-                    );
+                        scenario.GameType, over - 1, totalOvers, totalWickets, totalRuns, targetScore ?? 0);
                     adjustedAggression += contextMod;
 
-                    // Momentum modifier
                     if (recentRuns.ContainsKey(striker))
                     {
                         var last6 = recentRuns[striker].TakeLast(6).Sum();
                         var last10 = recentRuns[striker].TakeLast(10).Sum();
-
                         if (last6 >= 10) adjustedAggression += 5;
                         if (last10 <= 5) adjustedAggression -= 5;
                     }
-
-                    adjustedAggression += _random.Next(-5, 6);
+                    adjustedAggression += _random.Next(SimulationConstants.MinRandomAggressionAdjust, SimulationConstants.MaxRandomAggressionAdjust + 1);
                     adjustedAggression = Math.Clamp(adjustedAggression, 1, 100);
 
                     if (bowlerConfidence.TryGetValue(bowlerType, out int confidence))
@@ -154,26 +153,18 @@ namespace CrickSimPro.API.Services
 
                     int bowlerStamina = PlayerStaminaManager.GetBowlerStamina(bowlerType);
                     var outcome = MatchSimulationHelper.SimulateBall(
-                        adjustedAggression,
-                        bowlerAggression,
-                        scenario.GameType,
-                        scenario.PitchType,
-                        scenario.Weather,
-                        bowlerType,
-                        scenario.CurrentDay,
-                        spellCount,
-                        pressure,
-                        bowlerStamina
-                    );
+                        adjustedAggression, bowlerAggression, scenario.GameType,
+                        scenario.PitchType, scenario.Weather, bowlerType,
+                        scenario.CurrentDay, spellCount, pressure, bowlerStamina);
 
                     currentOver.Add($"{striker}: {outcome}");
                     BatterStatsManager.RecordBall(striker, outcome);
                     BowlerStatsManager.RecordDelivery(bowlerType, outcome);
+
                     if (outcome == "W")
                     {
                         totalWickets++;
                         wicketsThisOver++;
-
                         if (nextBatterIndex < batters.Count)
                         {
                             striker = batters[nextBatterIndex].Name;
@@ -205,7 +196,6 @@ namespace CrickSimPro.API.Services
                         int run = int.Parse(outcome);
                         if (!recentRuns.ContainsKey(striker))
                             recentRuns[striker] = new Queue<int>();
-
                         recentRuns[striker].Enqueue(run);
                         if (recentRuns[striker].Count > 10)
                             recentRuns[striker].Dequeue();
@@ -216,12 +206,9 @@ namespace CrickSimPro.API.Services
                         PlayerStaminaManager.ReduceBatterStamina(striker, run, pressure);
 
                         if (run % 2 == 1)
-                        {
                             (nonStriker, striker) = (striker, nonStriker);
-                        }
                     }
                 }
-
                 (nonStriker, striker) = (striker, nonStriker);
                 allOvers.Add(currentOver);
                 overStatsList.Add(new OverStat
@@ -239,7 +226,7 @@ namespace CrickSimPro.API.Services
         EndInnings:
             return new SimulationResult
             {
-                Message = $"Simulated {totalOvers} over(s)",
+                Message = $"Simulated {totalOvers} over(s)" + (isSecondInnings && targetScore.HasValue && totalRuns >= targetScore.Value ? " (Target Chased)" : ""),
                 Pitch = scenario.PitchType,
                 Weather = scenario.Weather,
                 Runs = totalRuns,
@@ -247,7 +234,9 @@ namespace CrickSimPro.API.Services
                 OversDetail = allOvers,
                 OverStats = overStatsList,
                 BatterStats = BatterStatsManager.GetAllStats(),
-                BowlerStats = BowlerStatsManager.GetAllStats()
+                BowlerStats = BowlerStatsManager.GetAllStats(),
+                IsChase = isSecondInnings,
+                TargetScore = targetScore
             };
         }
     }
