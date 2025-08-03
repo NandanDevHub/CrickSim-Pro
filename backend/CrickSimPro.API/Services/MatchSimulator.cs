@@ -17,6 +17,10 @@ namespace CrickSimPro.API.Services
         public string MatchResultType { get; set; }
         public string Winner { get; set; }
         public int? Margin { get; set; }
+
+        public SimulationResult SuperOverResultTeam1 { get; set; }
+        public SimulationResult SuperOverResultTeam2 { get; set; }
+
     }
 
     public class MatchSimulator
@@ -32,42 +36,86 @@ namespace CrickSimPro.API.Services
                 var secondScenario = scenario.CloneForSecondInnings(firstInningsResult.Runs + 1);
                 var secondInningsResult = SimulateInnings(secondScenario, true, null);
 
-                var team1Lead = firstInningsResult.Runs - secondInningsResult.Runs;
-                var thirdScenario = scenario.CloneForThirdInnings(team1Lead);
-                var thirdInningsResult = SimulateInnings(thirdScenario, false, null);
-
-                int testTarget = (firstInningsResult.Runs + thirdInningsResult.Runs) - secondInningsResult.Runs + 1;
-                var fourthScenario = scenario.CloneForFourthInnings(testTarget);
-                var fourthInningsResult = SimulateInnings(fourthScenario, true, testTarget);
-
-                string summary = "";
-                string resultType = "";
-                string winner = "";
-                int? margin = null;
-
-                if (fourthInningsResult.Runs >= testTarget)
+                bool enforceFollowOn = false;
+                int followOnThreshold = 200;
+                int team1Score = firstInningsResult.Runs;
+                int team2Score = secondInningsResult.Runs;
+                if ((team1Score - team2Score) >= followOnThreshold)
                 {
-                    summary = $"Team 2 won by {10 - fourthInningsResult.Wickets} wickets";
-                    resultType = "Win";
-                    winner = scenario.BattingSecond;
-                    margin = 10 - fourthInningsResult.Wickets;
+                    enforceFollowOn = true;
                 }
-                else if (fourthInningsResult.Wickets >= 10)
+
+                SimulationResult thirdInningsResult = null;
+                SimulationResult fourthInningsResult = null;
+                string summary = "", resultType = "", winner = ""; int? margin = null;
+
+                if (enforceFollowOn)
                 {
-                    summary = $"Team 1 won by {testTarget - fourthInningsResult.Runs - 1} runs";
-                    resultType = "Win";
-                    winner = scenario.BattingFirst;
-                    margin = testTarget - fourthInningsResult.Runs - 1;
-                }
-                else if ((fourthInningsResult.Runs == testTarget - 1) && fourthInningsResult.Wickets >= 10)
-                {
-                    summary = "Match Tied";
-                    resultType = "Tie";
+                    var thirdScenario = scenario.CloneForThirdInnings(0, forceTeam2Batting: true);
+                    thirdInningsResult = SimulateInnings(thirdScenario, true, null);
+
+                    int testTarget = (team1Score + 1) - (team2Score + thirdInningsResult.Runs);
+                    var fourthScenario = scenario.CloneForFourthInnings(testTarget);
+                    fourthInningsResult = SimulateInnings(fourthScenario, false, testTarget);
+
+                    if (fourthInningsResult.Runs >= testTarget)
+                    {
+                        summary = $"Team 1 won by {10 - fourthInningsResult.Wickets} wickets";
+                        resultType = "Win";
+                        winner = scenario.BattingFirst;
+                        margin = 10 - fourthInningsResult.Wickets;
+                    }
+                    else if (fourthInningsResult.Wickets >= 10)
+                    {
+                        summary = $"Team 2 won by {testTarget - fourthInningsResult.Runs - 1} runs";
+                        resultType = "Win";
+                        winner = scenario.BattingSecond;
+                        margin = testTarget - fourthInningsResult.Runs - 1;
+                    }
+                    else if ((fourthInningsResult.Runs == testTarget - 1) && fourthInningsResult.Wickets >= 10)
+                    {
+                        summary = "Match Tied";
+                        resultType = "Tie";
+                    }
+                    else
+                    {
+                        summary = "Match Drawn";
+                        resultType = "Draw";
+                    }
                 }
                 else
                 {
-                    summary = "Match Drawn";
-                    resultType = "Draw";
+                    var thirdScenario = scenario.CloneForThirdInnings(team1Score - team2Score);
+                    thirdInningsResult = SimulateInnings(thirdScenario, false, null);
+
+                    int testTarget = (team1Score + thirdInningsResult.Runs) - team2Score + 1;
+                    var fourthScenario = scenario.CloneForFourthInnings(testTarget);
+                    fourthInningsResult = SimulateInnings(fourthScenario, true, testTarget);
+
+                    if (fourthInningsResult.Runs >= testTarget)
+                    {
+                        summary = $"Team 2 won by {10 - fourthInningsResult.Wickets} wickets";
+                        resultType = "Win";
+                        winner = scenario.BattingSecond;
+                        margin = 10 - fourthInningsResult.Wickets;
+                    }
+                    else if (fourthInningsResult.Wickets >= 10)
+                    {
+                        summary = $"Team 1 won by {testTarget - fourthInningsResult.Runs - 1} runs";
+                        resultType = "Win";
+                        winner = scenario.BattingFirst;
+                        margin = testTarget - fourthInningsResult.Runs - 1;
+                    }
+                    else if ((fourthInningsResult.Runs == testTarget - 1) && fourthInningsResult.Wickets >= 10)
+                    {
+                        summary = "Match Tied";
+                        resultType = "Tie";
+                    }
+                    else
+                    {
+                        summary = "Match Drawn";
+                        resultType = "Draw";
+                    }
                 }
 
                 return new FullMatchResult
@@ -97,6 +145,8 @@ namespace CrickSimPro.API.Services
                 string resultType = "";
                 string winner = "";
                 int? margin = null;
+                SimulationResult superOverResultTeam1 = null;
+                SimulationResult superOverResultTeam2 = null;
 
                 if (secondInningsResult.Runs >= secondInningsResult.TargetScore)
                 {
@@ -107,8 +157,36 @@ namespace CrickSimPro.API.Services
                 }
                 else if (secondInningsResult.Runs == firstInningsResult.Runs)
                 {
-                    summary = "Match Tied";
-                    resultType = "Tie";
+                    // Adding Super Over Logic
+                    var superOverSim = new SuperOverSimulator();
+
+                    // Team 1 bats first in super over
+                    var superOverScenario1 = scenario.CloneForSuperOver(isTeamA: true);
+                    superOverResultTeam1 = superOverSim.SimulateSuperOver(superOverScenario1, scenario.TeamAPlayers, scenario.TeamBPlayers, _random);
+
+                    // Team 2 bats second in super over
+                    var superOverScenario2 = scenario.CloneForSuperOver(isTeamA: false);
+                    superOverResultTeam2 = superOverSim.SimulateSuperOver(superOverScenario2, scenario.TeamBPlayers, scenario.TeamAPlayers, _random);
+
+                    if (superOverResultTeam1.Runs > superOverResultTeam2.Runs)
+                    {
+                        summary = "Team 1 won in Super Over";
+                        resultType = "Super Over Win";
+                        winner = scenario.BattingFirst;
+                        margin = superOverResultTeam1.Runs - superOverResultTeam2.Runs;
+                    }
+                    else if (superOverResultTeam2.Runs > superOverResultTeam1.Runs)
+                    {
+                        summary = "Team 2 won in Super Over";
+                        resultType = "Super Over Win";
+                        winner = scenario.BattingSecond;
+                        margin = superOverResultTeam2.Runs - superOverResultTeam1.Runs;
+                    }
+                    else
+                    {
+                        summary = "Match and Super Over Tied";
+                        resultType = "Tie";
+                    }
                 }
                 else
                 {
@@ -124,6 +202,8 @@ namespace CrickSimPro.API.Services
                     SecondInningsResult = secondInningsResult,
                     ThirdInningsResult = null,
                     FourthInningsResult = null,
+                    SuperOverResultTeam1 = superOverResultTeam1,
+                    SuperOverResultTeam2 = superOverResultTeam2,
                     MatchSummary = summary,
                     MatchResultType = resultType,
                     Winner = winner,
@@ -140,7 +220,6 @@ namespace CrickSimPro.API.Services
             int totalRuns = 0;
             int totalWickets = 0;
 
-            // Batting team = TeamAPlayers if first innings, TeamBPlayers if second innings (NO swapping)
             var battingTeam = isSecondInnings ? scenario.TeamBPlayers : scenario.TeamAPlayers;
             var bowlingTeam = isSecondInnings ? scenario.TeamAPlayers : scenario.TeamBPlayers;
 

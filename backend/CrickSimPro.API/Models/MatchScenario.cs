@@ -56,32 +56,64 @@ namespace CrickSimPro.API.Models
             };
         }
 
-        public MatchScenario CloneForThirdInnings(int lead)
+        public MatchScenario CloneForThirdInnings(int lead, bool forceTeam2Batting = false)
         {
-            return new MatchScenario
+            if (forceTeam2Batting)
             {
-                GameType = this.GameType,
-                PitchType = this.PitchType,
-                Weather = this.Weather,
-                CurrentDay = this.CurrentDay + 1,
-                Overs = this.Overs,
-                BattingFirst = this.BattingFirst,
-                BattingSecond = this.BattingSecond,
+                // Follow-on: Team 2 bats again, Team 1 fields
+                return new MatchScenario
+                {
+                    GameType = this.GameType,
+                    PitchType = this.PitchType,
+                    Weather = this.Weather,
+                    CurrentDay = this.CurrentDay + 1,
+                    Overs = this.Overs,
+                    BattingFirst = this.BattingSecond,
+                    BattingSecond = this.BattingFirst,
 
-                TeamAPlayers = this.TeamAPlayers != null ? new List<PlayerProfile>(this.TeamAPlayers) : null,
-                TeamBPlayers = this.TeamBPlayers != null ? new List<PlayerProfile>(this.TeamBPlayers) : null,
+                    TeamAPlayers = this.TeamBPlayers != null ? new List<PlayerProfile>(this.TeamBPlayers) : null,
+                    TeamBPlayers = this.TeamAPlayers != null ? new List<PlayerProfile>(this.TeamAPlayers) : null,
 
-                BattingFirstPlayers = this.BattingFirstPlayers,
-                BattingSecondPlayers = this.BattingSecondPlayers,
-                Batters = this.BattingFirstPlayers != null
-                    ? this.BattingFirstPlayers.ConvertAll(bp => new BatterProfile { Name = bp.Name, Type = bp.Type })
-                    : new List<BatterProfile>(),
-                BowlerTypes = new List<string>(this.BowlerTypes ?? new List<string>()),
+                    BattingFirstPlayers = this.BattingSecondPlayers,
+                    BattingSecondPlayers = this.BattingFirstPlayers,
+                    Batters = this.BattingSecondPlayers != null
+                        ? this.BattingSecondPlayers.ConvertAll(bp => new BatterProfile { Name = bp.Name, Type = bp.Type })
+                        : new List<BatterProfile>(),
+                    BowlerTypes = new List<string>(this.BowlerTypes ?? new List<string>()),
 
-                BattingAggression = this.BattingAggression,
-                BowlingAggression = this.BowlingAggression,
-                TargetScore = null
-            };
+                    BattingAggression = this.BattingAggression,
+                    BowlingAggression = this.BowlingAggression,
+                    TargetScore = null
+                };
+            }
+            else
+            {
+                // Normal 3rd innings: Team 1 bats again
+                return new MatchScenario
+                {
+                    GameType = this.GameType,
+                    PitchType = this.PitchType,
+                    Weather = this.Weather,
+                    CurrentDay = this.CurrentDay + 1,
+                    Overs = this.Overs,
+                    BattingFirst = this.BattingFirst,
+                    BattingSecond = this.BattingSecond,
+
+                    TeamAPlayers = this.TeamAPlayers != null ? new List<PlayerProfile>(this.TeamAPlayers) : null,
+                    TeamBPlayers = this.TeamBPlayers != null ? new List<PlayerProfile>(this.TeamBPlayers) : null,
+
+                    BattingFirstPlayers = this.BattingFirstPlayers,
+                    BattingSecondPlayers = this.BattingSecondPlayers,
+                    Batters = this.BattingFirstPlayers != null
+                        ? this.BattingFirstPlayers.ConvertAll(bp => new BatterProfile { Name = bp.Name, Type = bp.Type })
+                        : new List<BatterProfile>(),
+                    BowlerTypes = new List<string>(this.BowlerTypes ?? new List<string>()),
+
+                    BattingAggression = this.BattingAggression,
+                    BowlingAggression = this.BowlingAggression,
+                    TargetScore = null
+                };
+            }
         }
 
         public MatchScenario CloneForFourthInnings(int target)
@@ -111,5 +143,33 @@ namespace CrickSimPro.API.Models
                 TargetScore = target
             };
         }
+
+        public MatchScenario CloneForSuperOver(bool isTeamA)
+        {
+            return new MatchScenario
+            {
+                GameType = this.GameType,
+                PitchType = this.PitchType,
+                Weather = this.Weather,
+                CurrentDay = this.CurrentDay,
+                Overs = 1,
+                BattingFirst = isTeamA ? this.BattingFirst : this.BattingSecond,
+                BattingSecond = isTeamA ? this.BattingSecond : this.BattingFirst,
+                TeamAPlayers = this.TeamAPlayers != null ? new List<PlayerProfile>(this.TeamAPlayers) : null,
+                TeamBPlayers = this.TeamBPlayers != null ? new List<PlayerProfile>(this.TeamBPlayers) : null,
+                BattingFirstPlayers = isTeamA ? this.BattingFirstPlayers : this.BattingSecondPlayers,
+                BattingSecondPlayers = isTeamA ? this.BattingSecondPlayers : this.BattingFirstPlayers,
+                Batters = isTeamA && this.BattingFirstPlayers != null
+                    ? this.BattingFirstPlayers.ConvertAll(bp => new BatterProfile { Name = bp.Name, Type = bp.Type })
+                    : this.BattingSecondPlayers != null
+                        ? this.BattingSecondPlayers.ConvertAll(bp => new BatterProfile { Name = bp.Name, Type = bp.Type })
+                        : new List<BatterProfile>(),
+                BowlerTypes = new List<string>(this.BowlerTypes ?? new List<string>()),
+                BattingAggression = this.BattingAggression,
+                BowlingAggression = this.BowlingAggression,
+                TargetScore = null
+            };
+        }
+
     }
 }
