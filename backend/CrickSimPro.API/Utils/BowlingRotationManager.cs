@@ -1,33 +1,55 @@
+using System;
+using System.Collections.Generic;
+
 namespace CrickSimPro.Utils
 {
     public static class BowlingRotationManager
     {
         private static Dictionary<int, string> OverToBowlerMap = new();
 
-        public static void Initialize(List<string> bowlerTypes)
+        public static void Initialize(List<string> bowlerNames)
         {
             OverToBowlerMap.Clear();
-            if (bowlerTypes == null || bowlerTypes.Count == 0)
-                throw new ArgumentException("BowlerTypes must not be empty");
+            if (bowlerNames == null || bowlerNames.Count == 0)
+                throw new ArgumentException("Bowler names must not be empty");
 
-            // Support up to 200 overs (very safe for multi-innings)
+            string lastBowler = null;
+            int bowlerIndex = 0;
             for (int over = 1; over <= 200; over++)
             {
-                int index = (over - 1) % bowlerTypes.Count;
-                OverToBowlerMap[over] = bowlerTypes[index];
+                if (bowlerNames.Count == 1)
+                {
+                    OverToBowlerMap[over] = bowlerNames[0];
+                    continue;
+                }
+
+                int attempts = 0;
+                while (attempts < bowlerNames.Count)
+                {
+                    string candidate = bowlerNames[bowlerIndex % bowlerNames.Count];
+                    bowlerIndex++;
+                    if (candidate != lastBowler)
+                    {
+                        OverToBowlerMap[over] = candidate;
+                        lastBowler = candidate;
+                        break;
+                    }
+                    attempts++;
+                }
+                if (!OverToBowlerMap.ContainsKey(over))
+                    OverToBowlerMap[over] = bowlerNames[(over - 1) % bowlerNames.Count];
             }
         }
 
-        public static string GetNextBowler(List<string> bowlerTypes, int overNumber, int totalOvers)
+        public static string GetNextBowler(List<string> bowlerNames, int overNumber, int totalOvers)
         {
             if (OverToBowlerMap.TryGetValue(overNumber, out var bowler))
                 return bowler;
-
-            // Fallback: round-robin
-            return bowlerTypes[(overNumber - 1) % bowlerTypes.Count];
+            return bowlerNames.Count > 0
+                ? bowlerNames[(overNumber - 1) % bowlerNames.Count]
+                : throw new ArgumentException("No bowlers available");
         }
 
-        // You can call this before each innings if needed (not strictly required if Initialize is always called)
         public static void Reset()
         {
             OverToBowlerMap.Clear();
