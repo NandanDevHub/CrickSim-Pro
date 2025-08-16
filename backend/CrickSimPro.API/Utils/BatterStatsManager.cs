@@ -1,4 +1,5 @@
 using CrickSimPro.API.Models;
+using CrickSimPro.Constants;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -6,7 +7,7 @@ namespace CrickSimPro.Utils
 {
     public static class BatterStatsManager
     {
-        private static readonly Dictionary<string, BatterStats> Stats = new();
+        private static readonly Dictionary<string, BatterStats> Stats = [];
 
         public static void Initialize(List<PlayerProfile> batters)
         {
@@ -20,6 +21,7 @@ namespace CrickSimPro.Utils
                     Runs = 0,
                     BallsFaced = 0,
                     IsOut = false,
+                    HowOut = null,
                     RetiredHurt = false,
                     DidNotBat = false,
                     Fours = 0,
@@ -29,35 +31,24 @@ namespace CrickSimPro.Utils
             }
         }
 
-        public static void RetireHurt(string batterName)
-        {
-            if (!Stats.ContainsKey(batterName)) return;
-            Stats[batterName].RetiredHurt = true;
-        }
-
-        public static void SetDidNotBat(string batterName)
-        {
-            if (!Stats.ContainsKey(batterName)) return;
-            Stats[batterName].DidNotBat = true;
-        }
-
-        public static void RecordBall(string batterName, string outcome)
+        public static void RecordBall(string batterName, string outcome, string? howOut = null)
         {
             if (!Stats.ContainsKey(batterName)) return;
             var batter = Stats[batterName];
 
             if (batter.DidNotBat) return;
 
-            if (outcome == "W")
+            if (outcome == SimulationConstants.Wicket)
             {
                 batter.IsOut = true;
                 batter.BallsFaced++;
+                batter.HowOut = howOut;
             }
-            else if (outcome == "RetiredHurt")
+            else if (outcome == SimulationConstants.RetiredHurt)
             {
                 batter.RetiredHurt = true;
             }
-            else if (outcome == "WD" || outcome == "NB" || outcome == "B" || outcome == "LB")
+            else if (outcome == SimulationConstants.Wide || outcome == SimulationConstants.NoBall || outcome == SimulationConstants.Byes || outcome == SimulationConstants.LegByes)
             {
                 batter.Extras++;
             }
@@ -72,12 +63,7 @@ namespace CrickSimPro.Utils
 
         public static List<BatterStats> GetAllStats()
         {
-            return Stats.Values.ToList();
-        }
-
-        public static void Clear()
-        {
-            Stats.Clear();
+            return [.. Stats.Values];
         }
     }
 }
