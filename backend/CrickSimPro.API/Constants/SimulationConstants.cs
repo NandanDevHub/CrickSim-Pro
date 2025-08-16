@@ -24,7 +24,9 @@ namespace CrickSimPro.Constants
         public const string WeatherSunny = "sunny";
         public const string WeatherCloudy = "cloudy";
         public const string WeatherHumid = "humid";
-        public const string WeatherDry = "dry"; 
+        public const string WeatherDry = "dry";
+        public const string WeatherWet = "wet";
+
 
         // --- Bowler Types ---
         public const string BowlerSpin = "spin";
@@ -72,16 +74,20 @@ namespace CrickSimPro.Constants
         public const string MarginWickets = "Wickets";
 
         // --- For UI, reports, dropdowns, validations ---
-        public static readonly string[] AllBowlerTypes = { BowlerPace, BowlerSwing, BowlerSpin };
-        public static readonly string[] AllPitchTypes = { PitchGreen, PitchDry, PitchNormal };
-        public static readonly string[] AllWeatherTypes = { WeatherSunny, WeatherCloudy, WeatherHumid };
+        public static readonly string[] AllBowlerTypes = [BowlerPace, BowlerSwing, BowlerSpin];
+        public static readonly string[] AllPitchTypes = [PitchGreen, PitchDry, PitchNormal];
+        public static readonly string[] AllWeatherTypes = [WeatherSunny, WeatherCloudy, WeatherHumid];
 
-        // --- (For future) Add constants for extras, super over, retire hurt, DLS, etc. ---
-        // public const string ExtraWide = "Wide";
-        // public const string ExtraNoBall = "NoBall";
-        // public const string SuperOver = "SuperOver";
-        // ...add as needed for world-class realism
+        // --- Batter Out Modes ---
 
-        // --- END: Central constants, DO NOT change in prod without careful review. ---
+        public const string Wicket = "W";
+        public const string RetiredHurt = "RetiredHurt";
+
+        // --- Extras ---
+        public const string Wide = "WD";
+        public const string NoBall = "NB";
+        public const string Byes = "B";
+
+        public const string LegByes = "LB";
     }
 }
