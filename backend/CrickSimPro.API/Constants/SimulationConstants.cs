@@ -24,7 +24,7 @@ namespace CrickSimPro.Constants
         public const string WeatherSunny = "sunny";
         public const string WeatherCloudy = "cloudy";
         public const string WeatherHumid = "humid";
-        public const string WeatherDry = "dry"; 
+        public const string WeatherDry = "dry";
         public const string WeatherWet = "wet";
 
 
@@ -77,5 +77,17 @@ namespace CrickSimPro.Constants
         public static readonly string[] AllBowlerTypes = [BowlerPace, BowlerSwing, BowlerSpin];
         public static readonly string[] AllPitchTypes = [PitchGreen, PitchDry, PitchNormal];
         public static readonly string[] AllWeatherTypes = [WeatherSunny, WeatherCloudy, WeatherHumid];
+
+        // --- Batter Out Modes ---
+
+        public const string Wicket = "W";
+        public const string RetiredHurt = "RetiredHurt";
+
+        // --- Extras ---
+        public const string Wide = "WD";
+        public const string NoBall = "NB";
+        public const string Byes = "B";
+
+        public const string LegByes = "LB";
     }
 }
