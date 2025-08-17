@@ -7,7 +7,7 @@ namespace CrickSimPro.API.Models
         public int Runs { get; set; }
         public int BallsFaced { get; set; }
         public bool IsOut { get; set; }
-        public required string HowOut { get; set; }
+        public string? HowOut { get; set; }
         public bool RetiredHurt { get; set; }
         public bool DidNotBat { get; set; }
         public int Fours { get; set; }
