@@ -27,13 +27,13 @@ Build a full-stack web application that allows users to:
 
 ## ⚙️ Tech Stack
 
-| Layer        | Technologies                                 |
-|--------------|----------------------------------------------|
-| **Backend**  | ASP.NET Core, C#, SQL Server (Docker)         |
-| **Frontend** | React.js, Chart.js, SVG                      |
-| **AI/ML**    | Azure Cognitive Services, Predictive Analytics |
-| **Collab**   | SignalR (WebSockets for real-time updates)   |
-| **Data**     | CricAPI or historical data for scenarios     |
+| Layer        | Technologies                                   | Status        |
+|--------------|--------------------------------------------------|---------------|
+| **Backend**  | ASP.NET Core, C#                                 | Implemented   |
+| **Frontend** | React.js, Chart.js, SVG                          | In progress   |
+| **AI/ML**    | Azure Cognitive Services, Predictive Analytics   | Planned       |
+| **Collab**   | SignalR (WebSockets for real-time updates)       | Planned       |
+| **Data**     | CricAPI or historical data; SQL Server (Docker)  | Planned       |
 
 ---
 
@@ -64,6 +64,22 @@ cricksim-pro/
 git clone https://github.com/NandanDevHub/CrickSim-Pro.git
 cd CrickSim-Pro
 ```
+
+### Run the backend (from /backend)
+
+    cd backend
+    dotnet restore
+    dotnet build
+    dotnet run
+
+### Run the frontend (from /frontend) 
+_currently frontend is In Progress_
+
+    cd ../frontend
+    npm install
+    npm start
+
+Open the URL shown in the terminal to access the React app. Use the form to submit scenarios to the backend and visualize results.
 
 ---
 
