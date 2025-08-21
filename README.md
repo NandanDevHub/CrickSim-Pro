@@ -82,6 +82,48 @@ _currently frontend is In Progress_
 Open the URL shown in the terminal to access the React app. Use the form to submit scenarios to the backend and visualize results.
 
 ---
+## 🔌 API — Latest Request Schema 
+_To be used by frontend_
+
+    {
+      "GameType": "TEST",
+      "PitchType": "Normal",
+      "Weather": "Wet",
+      "CurrentDay": 1,
+      "Overs": 90,
+      "BattingFirst": "India",
+      "BattingSecond": "Pakistan",
+      "TeamAPlayers": [
+        { "Name": "Rohit Sharma",        "BattingType": "Aggressive", "BowlingType": "None" },
+        { "Name": "Yashasvi Jaiswal",    "BattingType": "Aggressive", "BowlingType": "None" },
+        { "Name": "Virat Kohli",         "BattingType": "Anchor",     "BowlingType": "None" },
+        { "Name": "Shreyas Iyer",        "BattingType": "Finisher",   "BowlingType": "None" },
+        { "Name": "Rishabh Pant",        "BattingType": "Finisher",   "BowlingType": "None" },
+        { "Name": "Hardik Pandya",       "BattingType": "AllRounder", "BowlingType": "Fast" },
+        { "Name": "Ravindra Jadeja",     "BattingType": "AllRounder", "BowlingType": "Spin" },
+        { "Name": "Jasprit Bumrah",      "BattingType": "Tailender",  "BowlingType": "Fast" },
+        { "Name": "Mohammed Shami",      "BattingType": "Tailender",  "BowlingType": "Fast" },
+        { "Name": "Kuldeep Yadav",       "BattingType": "Tailender",  "BowlingType": "Spin" },
+        { "Name": "Mohammed Siraj",      "BattingType": "Tailender",  "BowlingType": "Fast" }
+      ],
+      "TeamBPlayers": [
+        { "Name": "Babar Azam",          "BattingType": "Anchor",     "BowlingType": "None" },
+        { "Name": "Mohammad Rizwan",     "BattingType": "Finisher",   "BowlingType": "None" },
+        { "Name": "Fakhar Zaman",        "BattingType": "Aggressive", "BowlingType": "None" },
+        { "Name": "Abdullah Shafique",   "BattingType": "Anchor",     "BowlingType": "None" },
+        { "Name": "Saud Shakeel",        "BattingType": "Aggressive", "BowlingType": "None" },
+        { "Name": "Shadab Khan",         "BattingType": "AllRounder", "BowlingType": "Spin" },
+        { "Name": "Mohammad Nawaz",      "BattingType": "AllRounder", "BowlingType": "Spin" },
+        { "Name": "Shaheen Afridi",      "BattingType": "Tailender",  "BowlingType": "Fast" },
+        { "Name": "Haris Rauf",          "BattingType": "Tailender",  "BowlingType": "Fast" },
+        { "Name": "Naseem Shah",         "BattingType": "Tailender",  "BowlingType": "Fast" },
+        { "Name": "Abrar Ahmed",         "BattingType": "Tailender",  "BowlingType": "Spin" }
+      ],
+      "BattingAggression": 50,
+      "BowlingAggression": 50
+    }
+
+---
 
 ## 🛠️ Work in Progress
 
@@ -92,13 +134,14 @@ This is a long-term portfolio project being built from scratch as a complete lea
 ## 📌 Roadmap
 
 - [x] Define scope and architecture
-- [ ] Backend: ASP.NET Core API Setup
-- [ ] Frontend: React App Setup
+- [x] Backend: ASP.NET Core API Setup
+- [-] Frontend: React App Setup
 - [ ] Cricket simulation engine
 - [ ] AI-powered prediction engine
 - [ ] Interactive SVG fielding UI
 - [ ] Real-time collaboration with SignalR
 - [ ] Community strategy sharing module
+- [ ] Database persistence (SQL Server / Docker)
 - [ ] Final deployment (Azure / Vercel)
 
 ---
@@ -106,6 +149,7 @@ This is a long-term portfolio project being built from scratch as a complete lea
 ## 🙌 Contributors
 
 - **Nandan Parmar** — Developer & Architect *(learning by building)*
+- **Shivam Singh** — Reviewer
 
 ---
 
