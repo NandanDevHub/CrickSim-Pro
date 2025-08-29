@@ -4,24 +4,23 @@ namespace CrickSimPro.API.Models
 {
     public class MatchScenario
     {
-        public string GameType { get; set; }
-        public string PitchType { get; set; }
-        public string Weather { get; set; }
+        public required string GameType { get; set; }
+        public required string PitchType { get; set; }
+        public required string Weather { get; set; }
         public int CurrentDay { get; set; }
         public int Overs { get; set; }
 
-        public string BattingFirst { get; set; }
-        public string BattingSecond { get; set; }
+        public required string BattingFirst { get; set; }
+        public required string BattingSecond { get; set; }
 
-        // Teams are fixed: TeamAPlayers = team batting first, TeamBPlayers = team batting second
-        public List<PlayerProfile> TeamAPlayers { get; set; }
-        public List<PlayerProfile> TeamBPlayers { get; set; }
+        public required List<PlayerProfile> TeamAPlayers { get; set; }
+        public required List<PlayerProfile> TeamBPlayers { get; set; }
 
-        // Legacy backward compatibility properties (optional)
-        public List<BatterProfile> BattingFirstPlayers { get; set; }
-        public List<BatterProfile> BattingSecondPlayers { get; set; }
-        public List<BatterProfile> Batters { get; set; }
-        public List<string> BowlerTypes { get; set; }
+        // Legacy backward compatibility properties
+        public required List<BatterProfile> BattingFirstPlayers { get; set; }
+        public required List<BatterProfile> BattingSecondPlayers { get; set; }
+        public List<BatterProfile>? Batters { get; set; }
+        public List<string>? BowlerTypes { get; set; }
 
         public int BattingAggression { get; set; }
         public int BowlingAggression { get; set; }
@@ -155,20 +154,21 @@ namespace CrickSimPro.API.Models
                 Overs = 1,
                 BattingFirst = isTeamA ? this.BattingFirst : this.BattingSecond,
                 BattingSecond = isTeamA ? this.BattingSecond : this.BattingFirst,
-                TeamAPlayers = this.TeamAPlayers != null ? new List<PlayerProfile>(this.TeamAPlayers) : null,
-                TeamBPlayers = this.TeamBPlayers != null ? new List<PlayerProfile>(this.TeamBPlayers) : null,
+                TeamAPlayers = this.TeamAPlayers != null ? [.. this.TeamAPlayers] : null,
+                TeamBPlayers = this.TeamBPlayers != null ? [.. this.TeamBPlayers] : null,
                 BattingFirstPlayers = isTeamA ? this.BattingFirstPlayers : this.BattingSecondPlayers,
                 BattingSecondPlayers = isTeamA ? this.BattingSecondPlayers : this.BattingFirstPlayers,
                 Batters = isTeamA && this.BattingFirstPlayers != null
                     ? this.BattingFirstPlayers.ConvertAll(bp => new BatterProfile { Name = bp.Name, Type = bp.Type })
                     : this.BattingSecondPlayers != null
                         ? this.BattingSecondPlayers.ConvertAll(bp => new BatterProfile { Name = bp.Name, Type = bp.Type })
-                        : new List<BatterProfile>(),
-                BowlerTypes = new List<string>(this.BowlerTypes ?? new List<string>()),
+                        : [],
+                BowlerTypes = new List<string>(this.BowlerTypes ?? []),
                 BattingAggression = this.BattingAggression,
                 BowlingAggression = this.BowlingAggression,
                 TargetScore = null
             };
+#pragma warning restore CS8601 // Possible null reference assignment.
         }
 
     }
