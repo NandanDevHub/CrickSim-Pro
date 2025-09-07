@@ -8,7 +8,6 @@ namespace CrickSimPro.Utils
     {
         private static readonly Dictionary<string, BowlerStats> Stats = new();
 
-        // For legacy (list of string)
         public static void Initialize(List<string> bowlerNames)
         {
             Stats.Clear();
@@ -20,12 +19,12 @@ namespace CrickSimPro.Utils
                     Overs = 0,
                     BallsBowled = 0,
                     RunsConceded = 0,
-                    Wickets = 0
+                    Wickets = 0,
+                    WicketModes = new List<string>()
                 };
             }
         }
 
-        // For modern (list of PlayerProfile)
         public static void Initialize(List<PlayerProfile> bowlerPlayers)
         {
             Stats.Clear();
@@ -37,16 +36,16 @@ namespace CrickSimPro.Utils
                     Overs = 0,
                     BallsBowled = 0,
                     RunsConceded = 0,
-                    Wickets = 0
+                    Wickets = 0,
+                    WicketModes = new List<string>()
                 };
             }
         }
 
-        public static void RecordDelivery(string bowler, string outcome)
+        public static void RecordDelivery(string bowler, string outcome, string howOut = null)
         {
             if (!Stats.TryGetValue(bowler, out var b)) return;
 
-            // Extras (wides, no balls, byes, leg byes): runs conceded but no ball added except on legal deliveries
             if (outcome == "WD" || outcome == "NB" || outcome == "B" || outcome == "LB")
             {
                 b.RunsConceded++;
@@ -55,7 +54,11 @@ namespace CrickSimPro.Utils
 
             b.BallsBowled++;
             if (outcome == "W")
+            {
                 b.Wickets++;
+                if (!string.IsNullOrEmpty(howOut))
+                    b.WicketModes.Add(howOut);
+            }
             else if (int.TryParse(outcome, out int run) && run >= 0 && run <= 6)
                 b.RunsConceded += run;
 
@@ -64,7 +67,7 @@ namespace CrickSimPro.Utils
 
         public static List<BowlerStats> GetAllStats()
         {
-            return Stats.Values.ToList();
+            return [.. Stats.Values];
         }
 
         public static void Clear()

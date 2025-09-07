@@ -1,19 +1,79 @@
 using CrickSimPro.Constants;
+using System;
+using System.Collections.Generic;
 
 namespace CrickSimPro.Utils
 {
-    /// <summary>
-    /// Contains all ball-by-ball simulation and core calculation helpers for the match engine.
-    /// Any core logic change here will directly impact match realism and output.
-    /// </summary>
     public static class MatchSimulationHelper
     {
         private static readonly Random _random = new();
+        public static (string outcome, string? howOut) SimulateBallWithWicketMode(
+            int battingAggression,
+            int bowlingAggression,
+            string gameType,
+            string pitchType,
+            string weather,
+            string bowlerType,
+            int currentDay,
+            int spellCount,
+            int pressure,
+            int bowlerStamina)
+        {
+            int extraRoll = _random.Next(100);
+            if (extraRoll < 5) return ("WD", null);
+            if (extraRoll < 10) return ("NB", null);
+            if (extraRoll < 13) return ("B", null);
+            if (extraRoll < 16) return ("LB", null);
 
-        /// <summary>
-        /// Simulates a single ball outcome based on current batter, bowler, pitch, and contextual match factors.
-        /// Returns: "0", "1", "2", "4", "6", or "W" (wicket).
-        /// </summary>
+            string outcome = SimulateBall(
+                battingAggression, bowlingAggression, gameType, pitchType, weather, bowlerType,
+                currentDay, spellCount, pressure, bowlerStamina);
+
+            if (outcome != "W")
+                return (outcome, null);
+
+            var modes = new List<(string mode, int weight)>
+            {
+                ("Bowled", 20),
+                ("Caught", 30),
+                ("LBW", 15),
+                ("Run Out", 10),
+                ("Stumped", bowlerType == SimulationConstants.BowlerSpin ? 15 : 5),
+                ("Hit Wicket", 2),
+                ("Caught & Bowled", 8),
+                ("Timed Out", 1),
+                ("Handled Ball", 1),
+                ("Obstructing the Field", 1)
+            };
+
+            var lbw = modes.Find(m => m.mode == "LBW");
+            if (lbw.mode != null && weather.ToLower() == SimulationConstants.WeatherWet && bowlerType == SimulationConstants.BowlerSwing)
+            {
+                int idx = modes.FindIndex(m => m.mode == "LBW");
+                modes[idx] = (lbw.mode, lbw.weight + 5);
+            }
+            var runOut = modes.Find(m => m.mode == "Run Out");
+            if (runOut.mode != null && pressure > 50)
+            {
+                int idx = modes.FindIndex(m => m.mode == "Run Out");
+                modes[idx] = (runOut.mode, runOut.weight + 5);
+            }
+
+            int total = 0;
+            foreach (var (mode, weight) in modes) total += weight;
+            int pick = _random.Next(total);
+            int cumulative = 0;
+            foreach (var (mode, weight) in modes)
+            {
+                cumulative += weight;
+                if (pick < cumulative)
+                    return ("W", mode);
+            }
+
+            // Adding a fallback
+            return ("W", "Caught");
+        }
+
         public static string SimulateBall(
             int battingAggression,
             int bowlingAggression,
@@ -26,38 +86,27 @@ namespace CrickSimPro.Utils
             int pressure,
             int bowlerStamina)
         {
-            // --- Normalize all inputs ---
             gameType = gameType?.ToUpperInvariant() ?? "";
             pitchType = pitchType?.ToLowerInvariant() ?? "";
             weather = weather?.ToLowerInvariant() ?? "";
             bowlerType = bowlerType?.ToLowerInvariant() ?? "";
 
-            // --- Get pitch & weather impacts ---
             (int pitchMod, int weatherMod) = MatchConditions.GetConditionsImpact(
                 pitchType, weather, gameType, currentDay);
 
-            // --- Get bowler effectiveness (spells, matchups, etc.) ---
             int bowlerMod = MatchConditions.GetBowlerEffectiveness(
                 bowlerType, pitchType, weather, gameType, currentDay, spellCount);
 
-            // --- Calculate "effective" aggression for batter this ball ---
             int effectiveAggression = Math.Clamp(
                 battingAggression - bowlingAggression + 5 + pitchMod + weatherMod - bowlerMod,
                 1, 100);
 
-            // --- Fatigue: If bowler is tired, batter gets a bonus ---
             if (bowlerStamina < 25) effectiveAggression += 4;
             else if (bowlerStamina < 40) effectiveAggression += 2;
 
-            // --- Pressure makes wickets likelier, scoring harder ---
             int pressureImpact = Math.Clamp(pressure / 7, 0, 15);
-
-            // --- RANDOM OUTCOME: The core "chance" roll ---
             int chance = Math.Max(0, _random.Next(100) + pressureImpact);
 
-            // --- Main simulation outcome logic ---
-            // For each game type, tune the bands for realism. Future: Extract to config for live tuning.
-            // (Extras can be slotted here in future for "WIDE", "NO BALL", etc.)
             return gameType switch
             {
                 SimulationConstants.GameTypeT20 =>
@@ -81,9 +130,7 @@ namespace CrickSimPro.Utils
                     chance < 85 ? "4" :
                     chance < 90 + effectiveAggression / 12 ? "6" : "W",
 
-                // If unknown game type, default to T20 logic for safety, but flag for maintainers
                 _ =>
-                    // TODO: [CrickSimPro] Unknown game type; review logic if you add new types!
                     chance < 30 - (effectiveAggression / 10) ? "0" :
                     chance < 60 ? "1" :
                     chance < 75 ? "2" :
@@ -92,38 +139,29 @@ namespace CrickSimPro.Utils
             };
         }
 
-        /// <summary>
-        /// Returns the default number of overs for a given game type.
-        /// </summary>
         public static int GetDefaultOvers(string gameType)
         {
             gameType = gameType?.ToUpperInvariant() ?? "";
             return gameType switch
             {
                 SimulationConstants.GameTypeTest => SimulationConstants.TestOvers,
-                SimulationConstants.GameTypeODI  => SimulationConstants.ODIOvers,
-                SimulationConstants.GameTypeT20  => SimulationConstants.T20Overs,
-                _ => SimulationConstants.T20Overs // Fallback
+                SimulationConstants.GameTypeODI => SimulationConstants.ODIOvers,
+                SimulationConstants.GameTypeT20 => SimulationConstants.T20Overs,
+                _ => SimulationConstants.T20Overs
             };
         }
 
-        /// <summary>
-        /// Applies batter type and match phase to aggression (e.g. openers/anchors start slow, finishers get a boost at end).
-        /// </summary>
         public static int ApplyBatterTypeModifier(string batterType, int aggression, int currentOver, int totalOvers)
         {
             batterType = batterType?.Trim() ?? "";
             return batterType switch
             {
                 "Aggressive" => Math.Min(100, aggression + 15),
-                "Anchor"     => currentOver < 10 ? Math.Max(1, aggression - 10) : aggression,
-                "Finisher"   => currentOver >= totalOvers - 5 ? Math.Min(100, aggression + 20) : aggression,
-                "Tailender"  => Math.Max(1, aggression - 15),
-                _            => aggression // AllRounder or unknown
+                "Anchor" => currentOver < 10 ? Math.Max(1, aggression - 10) : aggression,
+                "Finisher" => currentOver >= totalOvers - 5 ? Math.Min(100, aggression + 20) : aggression,
+                "Tailender" => Math.Max(1, aggression - 15),
+                _ => aggression
             };
         }
-
-        // --- [For future] Simulate extras (wide, no-ball), rain (DLS), super over, etc. ---
-        // public static string SimulateExtra(...) { ... }
     }
 }
