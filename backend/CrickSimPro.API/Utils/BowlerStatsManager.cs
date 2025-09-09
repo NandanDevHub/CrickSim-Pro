@@ -1,4 +1,5 @@
 using CrickSimPro.API.Models;
+using CrickSimPro.Constants;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -46,7 +47,7 @@ namespace CrickSimPro.Utils
         {
             if (!Stats.TryGetValue(bowler, out var b)) return;
 
-            if (outcome == "WD" || outcome == "NB" || outcome == "B" || outcome == "LB")
+            if (outcome == SimulationConstants.Wide || outcome == SimulationConstants.NoBall || outcome == SimulationConstants.Byes || outcome == SimulationConstants.LegByes)
             {
                 b.RunsConceded++;
                 return;
@@ -62,7 +63,7 @@ namespace CrickSimPro.Utils
             else if (int.TryParse(outcome, out int run) && run >= 0 && run <= 6)
                 b.RunsConceded += run;
 
-            b.Overs = b.BallsBowled / 6 + (b.BallsBowled % 6) / 10.0;
+            b.Overs = b.BallsBowled / 6 + b.BallsBowled % 6 / 10.0;
         }
 
         public static List<BowlerStats> GetAllStats()
