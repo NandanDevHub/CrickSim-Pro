@@ -1,26 +1,21 @@
 using CrickSimPro.API.Models;
 using CrickSimPro.Constants;
 using CrickSimPro.Utils;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 
 namespace CrickSimPro.API.Services
 {
     public class FullMatchResult
     {
-        public SimulationResult FirstInningsResult { get; set; }
-        public SimulationResult SecondInningsResult { get; set; }
-        public SimulationResult ThirdInningsResult { get; set; }
-        public SimulationResult FourthInningsResult { get; set; }
-        public string MatchSummary { get; set; }
-        public string MatchResultType { get; set; }
+        public required SimulationResult FirstInningsResult { get; set; }
+        public required SimulationResult SecondInningsResult { get; set; }
+        public SimulationResult? ThirdInningsResult { get; set; }
+        public SimulationResult? FourthInningsResult { get; set; }
+        public string? MatchSummary { get; set; }
+        public string? MatchResultType { get; set; }
         public string Winner { get; set; }
         public int? Margin { get; set; }
-
-        public SimulationResult SuperOverResultTeam1 { get; set; }
-        public SimulationResult SuperOverResultTeam2 { get; set; }
-
+        public SimulationResult? SuperOverResultTeam1 { get; set; }
+        public SimulationResult? SuperOverResultTeam2 { get; set; }
     }
 
     public class MatchSimulator
@@ -45,8 +40,8 @@ namespace CrickSimPro.API.Services
                     enforceFollowOn = true;
                 }
 
-                SimulationResult thirdInningsResult = null;
-                SimulationResult fourthInningsResult = null;
+                SimulationResult? thirdInningsResult = null;
+                SimulationResult? fourthInningsResult = null;
                 string summary = "", resultType = "", winner = ""; int? margin = null;
 
                 if (enforceFollowOn)
@@ -61,26 +56,26 @@ namespace CrickSimPro.API.Services
                     if (fourthInningsResult.Runs >= testTarget)
                     {
                         summary = $"Team 1 won by {10 - fourthInningsResult.Wickets} wickets";
-                        resultType = "Win";
+                        resultType = SimulationConstants.ResultWin;
                         winner = scenario.BattingFirst;
                         margin = 10 - fourthInningsResult.Wickets;
                     }
                     else if (fourthInningsResult.Wickets >= 10)
                     {
                         summary = $"Team 2 won by {testTarget - fourthInningsResult.Runs - 1} runs";
-                        resultType = "Win";
+                        resultType = SimulationConstants.ResultWin;
                         winner = scenario.BattingSecond;
                         margin = testTarget - fourthInningsResult.Runs - 1;
                     }
                     else if ((fourthInningsResult.Runs == testTarget - 1) && fourthInningsResult.Wickets >= 10)
                     {
                         summary = "Match Tied";
-                        resultType = "Tie";
+                        resultType = SimulationConstants.ResultTie;
                     }
                     else
                     {
                         summary = "Match Drawn";
-                        resultType = "Draw";
+                        resultType = SimulationConstants.ResultDraw;
                     }
                 }
                 else
@@ -95,26 +90,26 @@ namespace CrickSimPro.API.Services
                     if (fourthInningsResult.Runs >= testTarget)
                     {
                         summary = $"Team 2 won by {10 - fourthInningsResult.Wickets} wickets";
-                        resultType = "Win";
+                        resultType = SimulationConstants.ResultWin;
                         winner = scenario.BattingSecond;
                         margin = 10 - fourthInningsResult.Wickets;
                     }
                     else if (fourthInningsResult.Wickets >= 10)
                     {
                         summary = $"Team 1 won by {testTarget - fourthInningsResult.Runs - 1} runs";
-                        resultType = "Win";
+                        resultType = SimulationConstants.ResultWin;
                         winner = scenario.BattingFirst;
                         margin = testTarget - fourthInningsResult.Runs - 1;
                     }
                     else if ((fourthInningsResult.Runs == testTarget - 1) && fourthInningsResult.Wickets >= 10)
                     {
                         summary = "Match Tied";
-                        resultType = "Tie";
+                        resultType = SimulationConstants.ResultTie;
                     }
                     else
                     {
                         summary = "Match Drawn";
-                        resultType = "Draw";
+                        resultType = SimulationConstants.ResultDraw;
                     }
                 }
 
@@ -145,26 +140,21 @@ namespace CrickSimPro.API.Services
                 string resultType = "";
                 string winner = "";
                 int? margin = null;
-                SimulationResult superOverResultTeam1 = null;
-                SimulationResult superOverResultTeam2 = null;
+                SimulationResult? superOverResultTeam1 = null;
+                SimulationResult? superOverResultTeam2 = null;
 
                 if (secondInningsResult.Runs >= secondInningsResult.TargetScore)
                 {
                     summary = $"Team 2 chased successfully with {10 - secondInningsResult.Wickets} wickets left";
-                    resultType = "Win";
+                    resultType = SimulationConstants.ResultWin;
                     winner = scenario.BattingSecond;
                     margin = 10 - secondInningsResult.Wickets;
                 }
                 else if (secondInningsResult.Runs == firstInningsResult.Runs)
                 {
-                    // Adding Super Over Logic
                     var superOverSim = new SuperOverSimulator();
-
-                    // Team 1 bats first in super over
                     var superOverScenario1 = scenario.CloneForSuperOver(isTeamA: true);
                     superOverResultTeam1 = superOverSim.SimulateSuperOver(superOverScenario1, scenario.TeamAPlayers, scenario.TeamBPlayers, _random);
-
-                    // Team 2 bats second in super over
                     var superOverScenario2 = scenario.CloneForSuperOver(isTeamA: false);
                     superOverResultTeam2 = superOverSim.SimulateSuperOver(superOverScenario2, scenario.TeamBPlayers, scenario.TeamAPlayers, _random);
 
@@ -185,13 +175,13 @@ namespace CrickSimPro.API.Services
                     else
                     {
                         summary = "Match and Super Over Tied";
-                        resultType = "Tie";
+                        resultType = SimulationConstants.ResultTie;
                     }
                 }
                 else
                 {
                     summary = $"Team 1 won by {secondInningsResult.TargetScore - secondInningsResult.Runs - 1} runs";
-                    resultType = "Win";
+                    resultType = SimulationConstants.ResultWin;
                     winner = scenario.BattingFirst;
                     margin = secondInningsResult.TargetScore - secondInningsResult.Runs - 1;
                 }
@@ -257,7 +247,7 @@ namespace CrickSimPro.API.Services
                 [nonStriker] = new Queue<int>()
             };
 
-            string lastBowler = null;
+            string? lastBowler = null;
 
             for (int over = 1; over <= totalOvers; over++)
             {
@@ -352,19 +342,32 @@ namespace CrickSimPro.API.Services
                     adjustedAggression = Math.Clamp(adjustedAggression, 1, 100);
 
                     int bowlerStamina = PlayerStaminaManager.GetBowlerStamina(currentBowler.Name);
-                    var outcome = MatchSimulationHelper.SimulateBall(
+
+                    var (outcome, howOut) = MatchSimulationHelper.SimulateBallWithWicketMode(
                         adjustedAggression, bowlerAggression, scenario.GameType,
                         scenario.PitchType, scenario.Weather, currentBowlerType,
                         scenario.CurrentDay, bowlerOversCount[currentBowler.Name], pressure, bowlerStamina);
 
-                    currentOver.Add($"{striker}: {outcome}");
-                    BatterStatsManager.RecordBall(striker, outcome);
-                    BowlerStatsManager.RecordDelivery(currentBowler.Name, outcome);
+                    if (outcome == SimulationConstants.Wide || outcome == SimulationConstants.NoBall || outcome == SimulationConstants.Byes || outcome == SimulationConstants.LegByes)
+                    {
+                        currentOver.Add($"{striker}: {outcome}");
+                        BatterStatsManager.RecordBall(striker, outcome);
+                        BowlerStatsManager.RecordDelivery(currentBowler.Name, outcome);
+                        runsThisOver++;
+                        totalRuns++;
+                        ball--;
+                        continue;
+                    }
 
-                    if (outcome == "W")
+                    if (outcome == SimulationConstants.Wicket)
                     {
                         totalWickets++;
                         wicketsThisOver++;
+                        currentOver.Add($"{striker}: {howOut}");
+
+                        BatterStatsManager.RecordBall(striker, SimulationConstants.Wicket, howOut);
+                        BowlerStatsManager.RecordDelivery(currentBowler.Name, SimulationConstants.Wicket, howOut);
+
                         if (nextBatterIndex < battingTeam.Count)
                         {
                             striker = battingTeam[nextBatterIndex].Name;
@@ -388,6 +391,10 @@ namespace CrickSimPro.API.Services
                     }
                     else
                     {
+                        currentOver.Add($"{striker}: {outcome}");
+                        BatterStatsManager.RecordBall(striker, outcome);
+                        BowlerStatsManager.RecordDelivery(currentBowler.Name, outcome);
+
                         int run = int.Parse(outcome);
                         if (!recentRuns.ContainsKey(striker))
                             recentRuns[striker] = new Queue<int>();
